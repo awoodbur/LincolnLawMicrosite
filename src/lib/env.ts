@@ -15,7 +15,7 @@ const envSchema = z.object({
   // Mailgun (optional - emails will be skipped if not configured)
   MAILGUN_API_KEY: z.string().optional(),
   MAILGUN_DOMAIN: z.string().optional(),
-  MAILGUN_FROM: z.string().email().optional(),
+  MAILGUN_FROM: z.string().optional(), // Can be "Name <email@domain.com>" format
   STAFF_LEADS_EMAIL: z.string().email().optional(),
 
   // Plaid

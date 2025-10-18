@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { InfoCard } from '@/components/InfoCard';
 import { CheckCircle, Mail, Phone, Calendar, Home } from 'lucide-react';
 
 export default function SuccessPage() {
@@ -21,7 +22,7 @@ export default function SuccessPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12">
+    <div className="py-12">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Success Icon */}
@@ -97,13 +98,12 @@ export default function SuccessPage() {
           </div>
 
           {/* Important Note */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
-            <h3 className="font-semibold text-amber-900 mb-2">Important Note</h3>
-            <p className="text-sm text-amber-800">
+          <InfoCard variant="warning" title="Important Note" className="mb-8">
+            <p>
               The information you provided is for preliminary assessment only and does not constitute legal advice.
               Final determination of bankruptcy eligibility and options requires a detailed consultation with a licensed attorney.
             </p>
-          </div>
+          </InfoCard>
 
           {/* CTAs */}
           <div className="space-y-3">

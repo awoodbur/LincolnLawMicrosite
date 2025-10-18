@@ -11,7 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ProgressBar } from '@/components/ProgressBar';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { InfoCard } from '@/components/InfoCard';
+import { ArrowRight, ArrowLeft, Info } from 'lucide-react';
 
 const TOTAL_STEPS = 4;
 const STORAGE_KEY = 'lincoln-law-intake-data';
@@ -81,7 +82,7 @@ export default function IntakePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12">
+    <div className="py-12">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
@@ -93,6 +94,14 @@ export default function IntakePage() {
               Help us understand your situation so we can provide the best guidance for your bankruptcy options in Utah.
             </p>
           </div>
+
+          {/* Info Card - Privacy Notice */}
+          <InfoCard variant="info" className="mb-6">
+            <p>
+              Your information is securely stored and will only be used to assess your bankruptcy options.
+              All responses are confidential and protected by attorney-client privilege.
+            </p>
+          </InfoCard>
 
           {/* Progress Bar */}
           <div className="mb-8">

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(node --version:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(npx prisma generate:*)"
     ],
     "deny": [],
     "ask": []

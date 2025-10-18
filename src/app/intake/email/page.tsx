@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { InfoCard } from '@/components/InfoCard';
 import { Shield, Mail } from 'lucide-react';
 
 const STORAGE_KEY = 'lincoln-law-intake-data';
@@ -19,7 +20,7 @@ export default function EmailConsentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<EmailConsentData>({
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<EmailConsentData>({
     resolver: zodResolver(emailConsentSchema),
     defaultValues: {
       email: '',
@@ -28,8 +29,6 @@ export default function EmailConsentPage() {
       consentData: false,
     },
   });
-
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = form;
 
   const onSubmit = async (data: EmailConsentData) => {
     setIsSubmitting(true);
@@ -74,9 +73,8 @@ export default function EmailConsentPage() {
       // Clear intake data
       localStorage.removeItem(STORAGE_KEY);
 
-      // Navigate to Plaid link page (optional) or success
-      // For now, go directly to success
-      router.push('/intake/success');
+      // Navigate to Plaid link page (optional step)
+      router.push('/intake/link');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setIsSubmitting(false);
@@ -84,7 +82,7 @@ export default function EmailConsentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12">
+    <div className="py-12">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header */}
@@ -99,6 +97,14 @@ export default function EmailConsentPage() {
               Enter your email to receive your next steps and personalized guidance.
             </p>
           </div>
+
+          {/* Privacy assurance */}
+          <InfoCard variant="info" className="mb-6">
+            <p>
+              Your email will only be used to send you information about your bankruptcy assessment.
+              We will never sell or share your information with third parties.
+            </p>
+          </InfoCard>
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -204,9 +210,9 @@ export default function EmailConsentPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
+              <InfoCard variant="error" title="Submission Error">
+                <p>{error}</p>
+              </InfoCard>
             )}
 
             {/* Submit Button */}
@@ -226,10 +232,14 @@ export default function EmailConsentPage() {
           </form>
 
           {/* Disclaimer */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
-              By submitting this form, you acknowledge that the information provided is for preliminary assessment only and does not constitute legal advice. A licensed attorney will review your information and contact you to discuss your options.
-            </p>
+          <div className="mt-8">
+            <InfoCard variant="warning" title="Important Disclaimer">
+              <p className="text-sm">
+                By submitting this form, you acknowledge that the information provided is for preliminary
+                assessment only and does not constitute legal advice. A licensed attorney will review your
+                information and contact you to discuss your options.
+              </p>
+            </InfoCard>
           </div>
         </div>
       </div>

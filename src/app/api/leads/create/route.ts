@@ -75,11 +75,11 @@ async function handleCreateLead(req: NextRequest) {
     const isMailgunConfigured = env.MAILGUN_API_KEY && env.MAILGUN_DOMAIN && env.MAILGUN_FROM && env.STAFF_LEADS_EMAIL;
 
     if (isMailgunConfigured) {
-      // Send user confirmation email
+      // Send user confirmation email (DEV MODE: sending to dev instead of actual user)
       const userEmail = generateUserConfirmationEmail({ email: lead.email });
       await mailgunProvider.send({
-        to: lead.email,
-        subject: userEmail.subject,
+        to: env.STAFF_LEADS_EMAIL!, // DEV: Send to dev instead of lead.email
+        subject: `[DEV - User Confirmation] ${userEmail.subject}`,
         html: userEmail.html,
         text: userEmail.text,
       });
@@ -194,7 +194,7 @@ Received: ${new Date().toLocaleString('en-US', { timeZone: 'America/Denver' })}
 
       await mailgunProvider.send({
         to: env.STAFF_LEADS_EMAIL!,
-        subject: `New Bankruptcy Lead: ${lead.email} (${lead.state})`,
+        subject: `[DEV - Staff Lead] New Bankruptcy Lead: ${lead.email} (${lead.state})`,
         html: staffHtml,
         text: staffText,
       });
@@ -217,8 +217,20 @@ Received: ${new Date().toLocaleString('en-US', { timeZone: 'America/Denver' })}
       );
     }
 
+    // Check for unique constraint violation (duplicate email)
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      logger.warn('Duplicate email attempt', {
+        error: error.message,
+      });
+      return NextResponse.json(
+        { error: 'This email has already been submitted. If you need to update your information, please contact us directly.' },
+        { status: 409 }
+      );
+    }
+
     logger.error('Failed to create lead', {
       error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
