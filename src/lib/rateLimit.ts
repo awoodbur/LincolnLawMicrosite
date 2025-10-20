@@ -60,11 +60,14 @@ class RateLimiter {
     const now = Date.now();
     const maxAge = 300000; // 5 minutes
 
-    for (const [key, timestamps] of this.cache.entries()) {
+    const entriesToDelete: string[] = [];
+    this.cache.forEach((timestamps, key) => {
       if (timestamps.length === 0 || now - timestamps[timestamps.length - 1] > maxAge) {
-        this.cache.delete(key);
+        entriesToDelete.push(key);
       }
-    }
+    });
+
+    entriesToDelete.forEach((key) => this.cache.delete(key));
   }
 }
 

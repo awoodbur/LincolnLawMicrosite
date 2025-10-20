@@ -20,13 +20,13 @@ export default function EmailConsentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<EmailConsentData>({
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
     resolver: zodResolver(emailConsentSchema),
     defaultValues: {
       email: '',
-      consentPrivacy: false,
-      consentTerms: false,
-      consentData: false,
+      consentPrivacy: false as any,
+      consentTerms: false as any,
+      consentData: false as any,
     },
   });
 
@@ -42,6 +42,42 @@ export default function EmailConsentPage() {
       }
 
       const intakeData = JSON.parse(intakeDataStr);
+
+      // Check if we have detailed financial data for evaluation
+      let eligibilityResult = null;
+      if (
+        intakeData.monthlyIncome !== undefined &&
+        intakeData.monthlyExpenses !== undefined &&
+        intakeData.homeEquity !== undefined &&
+        intakeData.vehicleEquity !== undefined &&
+        intakeData.hasValuableAssets !== undefined
+      ) {
+        // Call eligibility evaluation endpoint
+        const evaluationData = {
+          householdSize: intakeData.householdSize,
+          monthlyIncome: intakeData.monthlyIncome,
+          monthlyExpenses: intakeData.monthlyExpenses,
+          homeEquity: intakeData.homeEquity,
+          vehicleEquity: intakeData.vehicleEquity,
+          hasValuableAssets: intakeData.hasValuableAssets,
+        };
+
+        const evalResponse = await fetch('/api/eligibility/evaluate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(evaluationData),
+        });
+
+        if (evalResponse.ok) {
+          eligibilityResult = await evalResponse.json();
+          // Store eligibility results for success page
+          localStorage.setItem('lincoln-law-eligibility', JSON.stringify(eligibilityResult));
+        } else {
+          console.error('Failed to evaluate eligibility, continuing without evaluation');
+        }
+      }
 
       // Combine intake data with email/consent
       const leadData = {
@@ -153,7 +189,7 @@ export default function EmailConsentPage() {
                       {' *'}
                     </label>
                     {errors.consentPrivacy && (
-                      <p className="text-xs text-red-600">{errors.consentPrivacy.message}</p>
+                      <p className="text-xs text-red-600">{String(errors.consentPrivacy.message)}</p>
                     )}
                   </div>
                 </div>
@@ -177,7 +213,7 @@ export default function EmailConsentPage() {
                       {' *'}
                     </label>
                     {errors.consentTerms && (
-                      <p className="text-xs text-red-600">{errors.consentTerms.message}</p>
+                      <p className="text-xs text-red-600">{String(errors.consentTerms.message)}</p>
                     )}
                   </div>
                 </div>
@@ -201,7 +237,7 @@ export default function EmailConsentPage() {
                       {' *'}
                     </label>
                     {errors.consentData && (
-                      <p className="text-xs text-red-600">{errors.consentData.message}</p>
+                      <p className="text-xs text-red-600">{String(errors.consentData.message)}</p>
                     )}
                   </div>
                 </div>

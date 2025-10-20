@@ -15,24 +15,24 @@ export interface UtahMeansTestThresholds {
 }
 
 /**
- * Utah median income by household size (placeholder values for PoC).
- * These are approximate 2024 estimates and must be replaced with official figures.
+ * Utah median income by household size (2025 values for Chapter 7/13 means test).
+ * Based on official U.S. Courts data.
  */
 export const UTAH_MEDIAN_INCOME_2024: UtahMeansTestThresholds[] = [
-  { householdSize: 1, annualMedianIncome: 58000 },
-  { householdSize: 2, annualMedianIncome: 73000 },
-  { householdSize: 3, annualMedianIncome: 84000 },
-  { householdSize: 4, annualMedianIncome: 96000 },
-  { householdSize: 5, annualMedianIncome: 104000 },
-  { householdSize: 6, annualMedianIncome: 112000 },
-  { householdSize: 7, annualMedianIncome: 120000 },
-  { householdSize: 8, annualMedianIncome: 128000 },
+  { householdSize: 1, annualMedianIncome: 85644 },
+  { householdSize: 2, annualMedianIncome: 93302 },
+  { householdSize: 3, annualMedianIncome: 109860 },
+  { householdSize: 4, annualMedianIncome: 128363 },
+  { householdSize: 5, annualMedianIncome: 139463 },
+  { householdSize: 6, annualMedianIncome: 150563 },
+  { householdSize: 7, annualMedianIncome: 161663 },
+  { householdSize: 8, annualMedianIncome: 172763 },
 ];
 
 /**
  * For households larger than 8, add this amount per additional person.
  */
-export const ADDITIONAL_PERSON_INCOME = 8000;
+export const ADDITIONAL_PERSON_INCOME = 11100;
 
 /**
  * Get the median income threshold for a given household size in Utah.
@@ -75,10 +75,33 @@ export const CASHFLOW_THRESHOLDS = {
 } as const;
 
 /**
+ * Utah bankruptcy exemptions (2025).
+ * These determine what assets you can protect in bankruptcy.
+ */
+export const UTAH_EXEMPTIONS_2025 = {
+  // Homestead exemption (primary residence equity)
+  homesteadSingle: 52350,
+  homesteadJoint: 104700,
+
+  // Motor vehicle exemption (per vehicle, combined total)
+  vehicleSingle: 3000,
+  vehicleJoint: 6000,
+
+  // General personal property threshold
+  valuableAssetThreshold: 500,
+} as const;
+
+/**
+ * Disposable income threshold (5% of monthly income).
+ * If excess is less than this percentage, budget passes.
+ */
+export const DISPOSABLE_INCOME_THRESHOLD = 0.05;
+
+/**
  * Last updated date for thresholds.
  * TODO: Implement automated check against this date.
  */
-export const THRESHOLDS_LAST_UPDATED = '2024-01-01';
+export const THRESHOLDS_LAST_UPDATED = '2025-01-01';
 
 /**
  * Check if thresholds are stale (older than 6 months).

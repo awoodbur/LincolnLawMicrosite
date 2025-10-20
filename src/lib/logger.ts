@@ -48,13 +48,13 @@ class Logger {
 
   private log(level: LogLevel, message: string, context?: LogContext) {
     const timestamp = new Date().toISOString();
-    const redactedContext = context ? this.redact(context) : {};
+    const redactedContext = context ? this.redact(context) : undefined;
 
     const logEntry = {
       timestamp,
       level,
       message,
-      ...redactedContext,
+      ...(redactedContext || {}),
     };
 
     const method = level === 'error' ? console.error : level === 'warn' ? console.warn : console.log;

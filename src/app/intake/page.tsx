@@ -14,7 +14,7 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { InfoCard } from '@/components/InfoCard';
 import { ArrowRight, ArrowLeft, Info } from 'lucide-react';
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 const STORAGE_KEY = 'lincoln-law-intake-data';
 
 export default function IntakePage() {
@@ -35,6 +35,12 @@ export default function IntakePage() {
       wageGarnishment: false,
       propertyConcerns: false,
       notes: '',
+      // Step 5 fields
+      monthlyIncome: undefined,
+      monthlyExpenses: undefined,
+      homeEquity: undefined,
+      vehicleEquity: undefined,
+      hasValuableAssets: undefined,
     },
   });
 
@@ -357,6 +363,163 @@ export default function IntakePage() {
                     </div>
                   </div>
                 </div>
+
+                <div className="flex justify-between">
+                  <Button type="button" variant="outline" onClick={prevStep}>
+                    <ArrowLeft className="mr-2 w-4 h-4" /> Back
+                  </Button>
+                  <Button type="button" onClick={nextStep}>
+                    Continue <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: Detailed Financial Information */}
+            {currentStep === 5 && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Detailed Financial Information</h2>
+                  <p className="text-gray-600 mb-4">
+                    This information helps us determine your preliminary bankruptcy eligibility and recommend the best chapter for your situation.
+                  </p>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="monthlyIncome">
+                        Average Monthly Gross Income (last 6 months) *
+                      </Label>
+                      <Input
+                        id="monthlyIncome"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="e.g., 4000"
+                        {...register('monthlyIncome', { valueAsNumber: true })}
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        Include all sources: wages, benefits, self-employment, etc.
+                      </p>
+                      {errors.monthlyIncome && (
+                        <p className="text-sm text-red-600 mt-1">{errors.monthlyIncome.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="monthlyExpenses">
+                        Monthly Necessary Living Expenses *
+                      </Label>
+                      <Input
+                        id="monthlyExpenses"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="e.g., 3800"
+                        {...register('monthlyExpenses', { valueAsNumber: true })}
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        Rent/mortgage, utilities, food, transportation, insurance, etc.
+                      </p>
+                      {errors.monthlyExpenses && (
+                        <p className="text-sm text-red-600 mt-1">{errors.monthlyExpenses.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="homeEquity">
+                        Primary Residence Equity *
+                      </Label>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <div className="flex-1">
+                          <Input
+                            id="homeEquity"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="e.g., 20000"
+                            disabled={watch('homeEquity') === 'NA'}
+                            {...register('homeEquity', {
+                              setValueAs: (v) => (watch('homeEquity') === 'NA' ? 'NA' : parseFloat(v) || 0),
+                            })}
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="noHome"
+                            checked={watch('homeEquity') === 'NA'}
+                            onChange={(e) => setValue('homeEquity', e.target.checked ? 'NA' : 0)}
+                            className="rounded border-gray-300"
+                          />
+                          <Label htmlFor="noHome" className="font-normal cursor-pointer">
+                            I don't own a home
+                          </Label>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Market value minus mortgage balance
+                      </p>
+                      {errors.homeEquity && (
+                        <p className="text-sm text-red-600 mt-1">{errors.homeEquity.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="vehicleEquity">
+                        Total Vehicle Equity (All Vehicles Combined) *
+                      </Label>
+                      <Input
+                        id="vehicleEquity"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="e.g., 3000"
+                        {...register('vehicleEquity', { valueAsNumber: true })}
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        Combined market value minus loan balances for all vehicles
+                      </p>
+                      {errors.vehicleEquity && (
+                        <p className="text-sm text-red-600 mt-1">{errors.vehicleEquity.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label>Do you own any non-exempt items worth more than $500? *</Label>
+                      <p className="text-sm text-gray-500 mb-2">
+                        Examples: jewelry, collectibles, valuable electronics, recreational vehicles, etc.
+                      </p>
+                      <RadioGroup
+                        value={watch('hasValuableAssets')?.toString()}
+                        onValueChange={(value) => setValue('hasValuableAssets', value === 'true')}
+                        className="mt-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="false" id="no-valuable" />
+                          <Label htmlFor="no-valuable" className="font-normal cursor-pointer">
+                            No, I don't have valuable items
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="true" id="yes-valuable" />
+                          <Label htmlFor="yes-valuable" className="font-normal cursor-pointer">
+                            Yes, I have valuable items
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                      {errors.hasValuableAssets && (
+                        <p className="text-sm text-red-600 mt-1">{errors.hasValuableAssets.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <InfoCard variant="info">
+                  <p>
+                    This information will be used to provide a preliminary bankruptcy eligibility assessment.
+                    All data is confidential and protected.
+                  </p>
+                </InfoCard>
 
                 <div className="flex justify-between">
                   <Button type="button" variant="outline" onClick={prevStep}>

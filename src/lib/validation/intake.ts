@@ -12,6 +12,12 @@ export const intakeSchema = z.object({
   wageGarnishment: z.boolean(),
   propertyConcerns: z.boolean(),
   notes: z.string().optional(),
+  // New detailed financial fields for Step 5
+  monthlyIncome: z.number().min(0).optional(),
+  monthlyExpenses: z.number().min(0).optional(),
+  homeEquity: z.union([z.number().min(0), z.literal('NA')]).optional(),
+  vehicleEquity: z.number().min(0).optional(),
+  hasValuableAssets: z.boolean().optional(),
 });
 
 export type IntakeFormData = z.infer<typeof intakeSchema>;
@@ -51,3 +57,14 @@ export const leadSchema = z.object({
 });
 
 export type LeadData = z.infer<typeof leadSchema>;
+
+export const eligibilityEvaluationSchema = z.object({
+  householdSize: z.number().min(1).max(20),
+  monthlyIncome: z.number().min(0),
+  monthlyExpenses: z.number().min(0),
+  homeEquity: z.union([z.number().min(0), z.literal('NA')]),
+  vehicleEquity: z.number().min(0),
+  hasValuableAssets: z.boolean(),
+});
+
+export type EligibilityEvaluationInput = z.infer<typeof eligibilityEvaluationSchema>;

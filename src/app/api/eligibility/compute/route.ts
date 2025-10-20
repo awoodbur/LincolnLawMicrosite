@@ -32,42 +32,47 @@ async function handleComputeEligibility(req: NextRequest) {
     let monthlyDebtPaymentsEstimate = 0;
     let cashflowMonthly = 0;
 
+    // TODO: Plaid integration requires plaidAccessToken field in Lead schema
     // Use Plaid data if available and requested
-    if (usePlaidData && lead.plaidAccessToken) {
-      try {
-        const financialData = await getFinancialSummary(lead.plaidAccessToken);
-        monthlyIncomeEstimate = financialData.transactions.monthlyAverageIncome;
-        monthlyDebtPaymentsEstimate = financialData.transactions.monthlyAverageExpenses * 0.3; // Estimate 30% of expenses are debt
-        cashflowMonthly = financialData.transactions.cashflowMonthly;
+    // if (usePlaidData && lead.plaidAccessToken) {
+    //   try {
+    //     const financialData = await getFinancialSummary(lead.plaidAccessToken);
+    //     monthlyIncomeEstimate = financialData.transactions.monthlyAverageIncome;
+    //     monthlyDebtPaymentsEstimate = financialData.transactions.monthlyAverageExpenses * 0.3; // Estimate 30% of expenses are debt
+    //     cashflowMonthly = financialData.transactions.cashflowMonthly;
 
-        logger.info('Using Plaid data for eligibility', { leadId });
-      } catch (error) {
-        logger.warn('Failed to get Plaid data, falling back to questionnaire data', {
-          leadId,
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
-    }
+    //     logger.info('Using Plaid data for eligibility', { leadId });
+    //   } catch (error) {
+    //     logger.warn('Failed to get Plaid data, falling back to questionnaire data', {
+    //       leadId,
+    //       error: error instanceof Error ? error.message : 'Unknown error',
+    //     });
+    //   }
+    // }
 
-    // Fall back to questionnaire data if Plaid not used or failed
-    if (monthlyIncomeEstimate === 0) {
-      // Parse income range (e.g., "3000-5000" -> 4000)
-      if (lead.monthlyIncome) {
-        const [min, max] = lead.monthlyIncome.split('-').map(Number);
-        monthlyIncomeEstimate = (min + max) / 2;
-      }
+    // Fall back to questionnaire data
+    // Parse income range (e.g., "<$3k" -> estimate midpoint)
+    const incomeRangeMap: Record<string, number> = {
+      '<$3k': 2000,
+      '$3–5k': 4000,
+      '$5–8k': 6500,
+      '$8k+': 10000,
+    };
+    monthlyIncomeEstimate = incomeRangeMap[lead.monthlyIncomeRange] || 4000;
 
-      // Parse debt range and estimate monthly payments
-      if (lead.unsecuredDebt) {
-        const [min, max] = lead.unsecuredDebt.split('-').map(Number);
-        const totalDebt = (min + max) / 2;
-        // Rough estimate: 3% of total debt as monthly payment
-        monthlyDebtPaymentsEstimate = totalDebt * 0.03;
-      }
+    // Parse debt range and estimate monthly payments
+    const debtRangeMap: Record<string, number> = {
+      '<$10k': 5000,
+      '$10–25k': 17500,
+      '$25–50k': 37500,
+      '$50k+': 75000,
+    };
+    const totalDebt = debtRangeMap[lead.unsecuredDebtRange] || 17500;
+    // Rough estimate: 3% of total debt as monthly payment
+    monthlyDebtPaymentsEstimate = totalDebt * 0.03;
 
-      // Estimate cashflow
-      cashflowMonthly = monthlyIncomeEstimate - monthlyDebtPaymentsEstimate - monthlyIncomeEstimate * 0.5; // Assume 50% for other expenses
-    }
+    // Estimate cashflow
+    cashflowMonthly = monthlyIncomeEstimate - monthlyDebtPaymentsEstimate - monthlyIncomeEstimate * 0.5; // Assume 50% for other expenses
 
     // Evaluate eligibility
     const eligibilityResult = evaluateEligibility({
@@ -78,15 +83,14 @@ async function handleComputeEligibility(req: NextRequest) {
       cashflowMonthly,
     });
 
-    // Store financial snapshot
-    await db.financialSnapshot.create({
+    // Store eligibility result (using EligibilityResult model from schema)
+    await db.eligibilityResult.create({
       data: {
         leadId: lead.id,
-        monthlyIncomeEstimate,
-        monthlyDebtPaymentsEstimate,
-        dti: eligibilityResult.metrics.dti,
-        cashflowMonthly: eligibilityResult.metrics.cashflowMonthly,
-        evaluationJson: JSON.stringify(eligibilityResult),
+        tier: eligibilityResult.tier,
+        rationale: JSON.stringify(eligibilityResult.rationale),
+        metrics: JSON.stringify(eligibilityResult.metrics),
+        disclaimers: JSON.stringify(eligibilityResult.disclaimers),
       },
     });
 
@@ -98,13 +102,13 @@ async function handleComputeEligibility(req: NextRequest) {
         event: 'eligibility_computed',
         payloadJson: JSON.stringify({
           tier: eligibilityResult.tier,
-          usedPlaidData: usePlaidData && lead.plaidAccessToken !== null,
+          usedPlaidData: false, // Plaid not currently integrated
         }),
       },
     });
 
-    // Send staff eligibility email if feature flag enabled
-    if (env.NEXT_PUBLIC_SHOW_ELIGIBILITY) {
+    // Send staff eligibility email if feature flag enabled and email configured
+    if (env.NEXT_PUBLIC_SHOW_ELIGIBILITY && env.STAFF_LEADS_EMAIL) {
       const staffEmail = generateStaffEligibilitySummaryEmail({
         email: lead.email,
         state: lead.state,
