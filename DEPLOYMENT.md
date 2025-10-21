@@ -143,34 +143,68 @@ Verify form submissions and Plaid sandbox connections
 
 Confirm staff notification emails arrive
 
-7️⃣ Database & CMS Integration
-Using PostgreSQL + Prisma
+7️⃣ Database Setup (AWS RDS PostgreSQL)
 
-Your data is stored in a structured Lead table (and related tables).
-Non-technical users can easily view or export it using:
+**Required for submissions to work!** Choose one of these AWS database options:
 
-Supabase or Neon (Postgres dashboards)
+### Option A: AWS RDS Free Tier (Recommended for Testing)
+**Cost:** Free for 12 months, then ~$15-18/month
 
-Free managed hosting; has a web UI for browsing tables, CSV exports, or API access.
+1. **AWS Console → RDS → Create Database**
+2. **Settings:**
+   - Engine: PostgreSQL 16.x
+   - Templates: Free tier
+   - DB identifier: `lincolnlaw-microsite-db`
+   - Master username: `postgres`
+   - Master password: [Create strong password]
+   - Instance: db.t3.micro
+   - Storage: 20 GB SSD
+   - **Public access: YES** (required for Amplify)
+   - Initial database name: `lincolnlaw`
 
-Prisma Studio
+3. **Configure Security Group:**
+   - After creation, go to the database's security group
+   - Add inbound rule: PostgreSQL (5432) from 0.0.0.0/0
 
-Run locally with:
+4. **Get Connection String:**
+   ```
+   postgresql://postgres:[PASSWORD]@[ENDPOINT]:5432/lincolnlaw
+   ```
+   Example: `postgresql://postgres:MyPass@lincolnlaw-db.abc.us-east-1.rds.amazonaws.com:5432/lincolnlaw`
 
+5. **Add to Amplify Environment Variables:**
+   - Key: `DATABASE_URL`
+   - Value: [Your connection string from step 4]
+
+6. **Create Migrations Locally:**
+   ```bash
+   export DATABASE_URL="your-connection-string"
+   npx prisma migrate dev --name init
+   git add prisma/migrations
+   git commit -m "Add PostgreSQL migrations"
+   git push origin main
+   ```
+
+### Option B: AWS Aurora Serverless v2 (Production Scaling)
+**Cost:** ~$43+/month, auto-scales with demand
+- Same setup as RDS, but choose Aurora PostgreSQL Serverless v2
+- Better for production with variable traffic
+
+### Viewing Your Data
+
+**Prisma Studio (No SQL Required):**
+```bash
+export DATABASE_URL="your-rds-connection-string"
 npx prisma studio
+```
+Opens http://localhost:5555 with a graphical interface to view/edit leads.
 
+**AWS RDS Console:**
+- Go to RDS → Databases → Query Editor
+- Connect and run SQL queries directly
 
-Opens a graphical interface (http://localhost:5555
-) where you can view and edit lead data—no SQL knowledge needed.
-
-CMS Integration
-
-Most modern CMS platforms (WordPress, Webflow, Contentful) can fetch data via a small API proxy from your /api/leads/* routes or directly from Supabase API.
-
-You can also configure an automation (Zapier, Make, or AWS Lambda) that pushes each new lead into their CMS automatically.
-
-✅ So yes — Prisma/Postgres is absolutely simple to manage.
-If they don’t want to touch SQL, you can host the DB in Supabase and give them dashboard access — 100% no-code.
+**Third-party Tools:**
+- TablePlus, pgAdmin, DBeaver (connect using your DATABASE_URL)
 
 8️⃣ Optional Enhancements
 
