@@ -5,17 +5,18 @@ frontend:
       commands:
         - corepack enable
         - npm ci
-        # Set a default DATABASE_URL for Prisma Client generation only
-        - export DATABASE_URL="file:./prisma/dev.db"
     build:
       commands:
-        # Create empty SQLite database for build
-        - mkdir -p prisma
-        - touch prisma/dev.db
         # Generate Prisma Client (required for Next.js build)
         - npx prisma generate
-        # Create database schema (creates tables in the empty SQLite file)
-        - npx prisma db push --skip-generate
+        # Run database migrations if DATABASE_URL is set
+        - |
+          if [ -n "$DATABASE_URL" ]; then
+            echo "Running database migrations..."
+            npx prisma migrate deploy
+          else
+            echo "Warning: DATABASE_URL not set - skipping migrations"
+          fi
         # Build Next.js app
         - npm run build
   artifacts:
