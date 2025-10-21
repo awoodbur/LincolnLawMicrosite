@@ -9,13 +9,14 @@ frontend:
       commands:
         # Generate Prisma Client (required for Next.js build)
         - npx prisma generate
-        # Run database migrations if DATABASE_URL is set
+        # Run database migrations only if DATABASE_URL is set AND is a valid PostgreSQL URL
         - |
-          if [ -n "$DATABASE_URL" ]; then
+          if [ -n "$DATABASE_URL" ] && [[ "$DATABASE_URL" == postgres* ]]; then
             echo "Running database migrations..."
             npx prisma migrate deploy
           else
-            echo "Warning: DATABASE_URL not set - skipping migrations"
+            echo "Warning: DATABASE_URL not set or not PostgreSQL - skipping migrations"
+            echo "Build will continue without database connection"
           fi
         # Build Next.js app
         - npm run build
