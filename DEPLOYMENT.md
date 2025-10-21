@@ -62,20 +62,32 @@ Click Save and Deploy
 3️⃣ Set Environment Variables
 
 In Amplify → App Settings → Environment Variables, add:
-(For the production version, these would need to be replaced by the real values, not Aaron's test values)
-PLAID_CLIENT_ID=...
-PLAID_SECRET=...
+
+**Required Environment Variables:**
+```
+NEXT_PUBLIC_SITE_URL=https://your-domain.com (or your Amplify preview URL)
+PLAID_CLIENT_ID=your_plaid_client_id
+PLAID_SECRET=your_plaid_secret
 PLAID_ENV=sandbox
-PLAID_PRODUCTS=transactions,identity,liabilities
-MAILGUN_API_KEY=...
-MAILGUN_DOMAIN=...
-MAILGUN_FROM="Lincoln Law <no-reply@lincolnlaw.com>"
-STAFF_LEADS_EMAIL=aarondswoodbury@gmail.com
-NEXT_PUBLIC_SITE_URL=https://lincolnlaw.com
-DATABASE_URL=postgresql://user:password@host:5432/lincolnlaw
+PLAID_PRODUCTS=transactions,identity
+```
 
+**Optional (Email & Database):**
+```
+MAILGUN_API_KEY=your_mailgun_key (optional - emails will be skipped if not set)
+MAILGUN_DOMAIN=your_domain.com (optional)
+MAILGUN_FROM="Your Company <no-reply@yourdomain.com>" (optional)
+STAFF_LEADS_EMAIL=staff@yourdomain.com (optional)
+DATABASE_URL=postgresql://user:password@host:5432/dbname (optional for initial deployment)
+```
 
-Then click Save → Redeploy.
+**Important Notes:**
+- If you don't set `DATABASE_URL`, the build will use a temporary SQLite database just for compilation
+- For production, you should set up a PostgreSQL database (Supabase, Neon, or AWS RDS) and add the DATABASE_URL
+- Without MAILGUN variables, the app will skip sending emails but will still function
+- The Plaid variables are required for the bank linking feature
+
+Then click **Save → Redeploy**.
 
 4️⃣ Verify Build
 
