@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePlaidLink } from 'react-plaid-link';
 import { PlaidLinkButton } from '@/components/PlaidLinkButton';
@@ -76,11 +76,16 @@ export default function PlaidLinkPage() {
     // This is fine, they can skip
   }, []);
 
-  const { open, ready } = usePlaidLink({
-    token: linkToken,
-    onSuccess,
-    onExit,
-  });
+  const config = useMemo(
+    () => ({
+      token: linkToken,
+      onSuccess,
+      onExit,
+    }),
+    [linkToken, onSuccess, onExit]
+  );
+
+  const { open, ready } = usePlaidLink(config);
 
   const handleSkip = () => {
     router.push('/intake/success');

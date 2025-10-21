@@ -24,9 +24,9 @@ export type IntakeFormData = z.infer<typeof intakeSchema>;
 
 export const emailConsentSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  consentPrivacy: z.literal(true, { errorMap: () => ({ message: 'Required' }) }),
-  consentTerms: z.literal(true, { errorMap: () => ({ message: 'Required' }) }),
-  consentData: z.literal(true, { errorMap: () => ({ message: 'Required' }) }),
+  consentPrivacy: z.literal(true, { message: 'Required' }),
+  consentTerms: z.literal(true, { message: 'Required' }),
+  consentData: z.literal(true, { message: 'Required' }),
 });
 
 export type EmailConsentData = z.infer<typeof emailConsentSchema>;

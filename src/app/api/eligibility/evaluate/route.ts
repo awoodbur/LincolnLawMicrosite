@@ -49,13 +49,13 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       logger.warn('Invalid eligibility evaluation input', {
-        errors: error.errors,
+        errors: error.issues,
         ip,
       });
       return NextResponse.json(
         {
           error: 'Invalid input',
-          details: error.errors,
+          details: error.issues,
         },
         { status: 400 }
       );

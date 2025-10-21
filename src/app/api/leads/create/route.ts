@@ -210,9 +210,9 @@ Received: ${new Date().toLocaleString('en-US', { timeZone: 'America/Denver' })}
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      logger.warn('Invalid lead data submitted', { errors: error.errors });
+      logger.warn('Invalid lead data submitted', { errors: error.issues });
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       );
     }

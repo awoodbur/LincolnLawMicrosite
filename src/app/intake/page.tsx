@@ -490,7 +490,7 @@ export default function IntakePage() {
                         Examples: jewelry, collectibles, valuable electronics, recreational vehicles, etc.
                       </p>
                       <RadioGroup
-                        value={watch('hasValuableAssets')?.toString()}
+                        value={watch('hasValuableAssets') !== undefined ? String(watch('hasValuableAssets')) : undefined}
                         onValueChange={(value) => setValue('hasValuableAssets', value === 'true')}
                         className="mt-2"
                       >

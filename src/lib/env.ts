@@ -5,8 +5,8 @@ const envSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url(),
   NEXT_PUBLIC_SHOW_ELIGIBILITY: z
     .string()
-    .transform((val) => val === 'true')
-    .default('false'),
+    .default('false')
+    .transform((val) => val === 'true'),
   NEXT_PUBLIC_GA_ID: z.string().optional(),
 
   // Database
