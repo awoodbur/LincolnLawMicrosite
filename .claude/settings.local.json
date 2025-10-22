@@ -10,7 +10,9 @@
       "Bash(npm install:*)",
       "Bash(npm show:*)",
       "Bash(timeout:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(test:*)",
+      "Bash(npx prisma migrate:*)"
     ],
     "deny": [],
     "ask": []

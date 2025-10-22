@@ -154,7 +154,7 @@ Confirm staff notification emails arrive
 2. **Settings:**
    - Engine: PostgreSQL 16.x
    - Templates: Free tier
-   - DB identifier: `lincolnlaw-microsite-db`
+   - DB identifier: `lincoln-law-microsite-db`
    - Master username: `postgres`
    - Master password: [Create strong password]
    - Instance: db.t3.micro
