@@ -8,11 +8,15 @@ declare global {
 // Get DATABASE_URL - in Amplify serverless, it might come from different sources
 function getDatabaseUrl(): string | undefined {
   // Try various sources in order of preference
-  return (
-    process.env.DATABASE_URL ||
-    // @ts-ignore - Next.js env config
-    (typeof window === 'undefined' && global.process?.env?.DATABASE_URL)
-  );
+  const dbUrl = process.env.DATABASE_URL;
+  if (dbUrl) return dbUrl;
+
+  // @ts-ignore - Next.js env config
+  if (typeof window === 'undefined' && global.process?.env?.DATABASE_URL) {
+    return global.process.env.DATABASE_URL;
+  }
+
+  return undefined;
 }
 
 // Log database configuration for debugging
