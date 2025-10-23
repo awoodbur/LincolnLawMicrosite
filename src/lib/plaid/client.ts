@@ -21,14 +21,14 @@ import type {
 /**
  * Plaid client configuration (lazy-initialized)
  */
-let plaidClient: PlaidApi | null = null;
+let _plaidClient: PlaidApi | null = null;
 
 function getPlaidClient(): PlaidApi {
   if (!env.PLAID_CLIENT_ID || !env.PLAID_SECRET) {
     throw new Error('Plaid credentials not configured. Please set PLAID_CLIENT_ID and PLAID_SECRET environment variables.');
   }
 
-  if (!plaidClient) {
+  if (!_plaidClient) {
     const configuration = new Configuration({
       basePath: PlaidEnvironments[env.PLAID_ENV as keyof typeof PlaidEnvironments],
       baseOptions: {
@@ -38,11 +38,23 @@ function getPlaidClient(): PlaidApi {
         },
       },
     });
-    plaidClient = new PlaidApi(configuration);
+    _plaidClient = new PlaidApi(configuration);
   }
 
-  return plaidClient;
+  return _plaidClient;
 }
+
+// Export plaidClient as a getter for backward compatibility
+export const plaidClient = new Proxy({} as PlaidApi, {
+  get(_target, prop) {
+    const client = getPlaidClient();
+    const value = (client as any)[prop];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  }
+});
 
 /**
  * Create a Plaid Link token for the client-side integration
