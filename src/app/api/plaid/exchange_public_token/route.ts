@@ -73,63 +73,71 @@ async function handleExchangePublicToken(req: NextRequest) {
       sandbox: true,
     });
 
-    // Store access token in PlaidSummary (server-side only)
-    // Check if PlaidSummary already exists
-    const existingSummary = await db.plaidSummary.findUnique({
-      where: { leadId },
-    });
+    // Lead is already created on email page, so leadId should always be valid
+    // Only skip database storage if somehow a temp ID is used (edge case)
+    const isTempLead = leadId.startsWith('temp_');
 
-    const summaryData = {
-      accessToken, // ONLY stored server-side, never sent to client
-      itemId: result.item_id,
-      transactionsCount: transactionsSummary.total,
-      accountsCount: transactionsSummary.accounts,
-      identity: identitySummary,
-      liabilities: liabilitiesSummary,
-      estimatedMonthlyIncome: transactionsSummary.total > 0 ? 3500 : 0, // Sandbox estimate
-      estimatedMonthlyExpenses: transactionsSummary.total > 0 ? 2800 : 0,
-      sandbox: true,
-      fetchedAt: new Date().toISOString(),
-    };
-
-    if (existingSummary) {
-      // Update existing
-      await db.plaidSummary.update({
+    if (!isTempLead) {
+      // Store access token in PlaidSummary (server-side only)
+      // Check if PlaidSummary already exists
+      const existingSummary = await db.plaidSummary.findUnique({
         where: { leadId },
-        data: {
-          summaryJson: JSON.stringify(summaryData),
-        },
       });
-    } else {
-      // Create new
-      await db.plaidSummary.create({
+
+      const summaryData = {
+        accessToken, // ONLY stored server-side, never sent to client
+        itemId: result.item_id,
+        transactionsCount: transactionsSummary.total,
+        accountsCount: transactionsSummary.accounts,
+        identity: identitySummary,
+        liabilities: liabilitiesSummary,
+        estimatedMonthlyIncome: transactionsSummary.total > 0 ? 3500 : 0, // Sandbox estimate
+        estimatedMonthlyExpenses: transactionsSummary.total > 0 ? 2800 : 0,
+        sandbox: true,
+        fetchedAt: new Date().toISOString(),
+      };
+
+      if (existingSummary) {
+        // Update existing
+        await db.plaidSummary.update({
+          where: { leadId },
+          data: {
+            summaryJson: JSON.stringify(summaryData),
+          },
+        });
+      } else {
+        // Create new
+        await db.plaidSummary.create({
+          data: {
+            leadId,
+            summaryJson: JSON.stringify(summaryData),
+          },
+        });
+      }
+
+      // Create audit log
+      await db.auditLog.create({
         data: {
           leadId,
-          summaryJson: JSON.stringify(summaryData),
+          actor: 'user',
+          event: 'plaid_linked',
+          payloadJson: JSON.stringify({
+            itemId: result.item_id,
+            sandbox: true,
+            transactionsCount: transactionsSummary.total,
+            accountsCount: transactionsSummary.accounts,
+            // Never log the access_token
+          }),
         },
       });
+
+      logger.info('Plaid account linked successfully', { leadId, sandbox: true });
+    } else {
+      logger.info('Plaid token exchanged (temp lead, will be stored later)', {
+        itemId: result.item_id,
+        sandbox: true
+      });
     }
-
-    // Financial snapshot data is now stored in PlaidSummary.summaryJson
-    // For production, you may want to create a separate FinancialSnapshot model
-
-    // Create audit log
-    await db.auditLog.create({
-      data: {
-        leadId,
-        actor: 'user',
-        event: 'plaid_linked',
-        payloadJson: JSON.stringify({
-          itemId: result.item_id,
-          sandbox: true,
-          transactionsCount: transactionsSummary.total,
-          accountsCount: transactionsSummary.accounts,
-          // Never log the access_token
-        }),
-      },
-    });
-
-    logger.info('Plaid account linked successfully', { leadId, sandbox: true });
 
     return NextResponse.json({
       success: true,

@@ -14,12 +14,13 @@ export default function PlaidLinkPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get lead ID from localStorage
+  // Get lead ID from localStorage (lead was already created on email page)
   const leadId = typeof window !== 'undefined' ? localStorage.getItem('lincoln-law-lead-id') : null;
 
   // Fetch link token on mount
   useEffect(() => {
     if (!leadId) {
+      // No lead ID, redirect to start
       router.push('/intake');
       return;
     }
@@ -50,7 +51,9 @@ export default function PlaidLinkPage() {
 
   const onSuccess = useCallback(async (publicToken: string) => {
     try {
-      // Exchange public token for access token
+      setIsLoading(true);
+
+      // Exchange public token and store Plaid data
       const response = await fetch('/api/plaid/exchange_public_token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,12 +71,12 @@ export default function PlaidLinkPage() {
       router.push('/intake/success');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to link account');
+      setIsLoading(false);
     }
   }, [leadId, router]);
 
   const onExit = useCallback(() => {
-    // User closed the Plaid Link modal
-    // This is fine, they can skip
+    // User closed the Plaid Link modal - this is fine, they can skip
   }, []);
 
   const config = useMemo(
@@ -88,6 +91,7 @@ export default function PlaidLinkPage() {
   const { open, ready } = usePlaidLink(config);
 
   const handleSkip = () => {
+    // Lead already created, just go to success
     router.push('/intake/success');
   };
 
@@ -144,7 +148,7 @@ export default function PlaidLinkPage() {
             </InfoCard>
           )}
 
-          {/* Plaid Link Button with built-in benefits messaging */}
+          {/* Plaid Link Button */}
           <div className="mb-6">
             <PlaidLinkButton
               onClick={() => open()}

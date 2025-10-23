@@ -8,6 +8,45 @@ import { generateUserConfirmationEmail } from '@/lib/email/templates/user_confir
 import { env } from '@/lib/env';
 import { leadSchema } from '@/lib/validation/intake';
 
+// Extend lead schema to include eligibility
+const leadWithEligibilitySchema = z.object({
+  // Intake step fields
+  state: z.literal('Utah'),
+  county: z.string().optional(),
+  householdSize: z.number().min(1).max(8),
+  maritalStatus: z.enum(['Single', 'Married', 'Separated']),
+  monthlyIncomeRange: z.enum(['<$3k', '$3–5k', '$5–8k', '$8k+']),
+  unsecuredDebtRange: z.enum(['<$10k', '$10–25k', '$25–50k', '$50k+']),
+  employmentStatus: z.enum(['Employed', 'Self-employed', 'Unemployed', 'Retired']),
+  missedPayments: z.boolean(),
+  wageGarnishment: z.boolean(),
+  propertyConcerns: z.boolean(),
+  notes: z.string().optional(),
+
+  // Email + consent fields
+  email: z.string().email(),
+  consentPrivacy: z.boolean(),
+  consentTerms: z.boolean(),
+  consentData: z.boolean(),
+
+  // Metadata
+  source: z.string().default('lincolnlaw-utah-intake'),
+
+  // Eligibility result (optional)
+  eligibilityResult: z.object({
+    summary: z.string(),
+    chapter7Eligibility: z.string(),
+    recommendedChapter: z.string(),
+    reasons: z.array(z.string()),
+    flags: z.object({
+      incomePass: z.boolean(),
+      budgetPass: z.boolean(),
+      assetRisk: z.boolean(),
+    }),
+    disclaimer: z.string(),
+  }).optional().nullable(),
+});
+
 async function handleCreateLead(req: NextRequest) {
   try {
     console.log('[API] /api/leads/create - Request received');
@@ -15,7 +54,7 @@ async function handleCreateLead(req: NextRequest) {
     console.log('[API] Request body parsed successfully');
 
     // Validate incoming data
-    const validatedData = leadSchema.parse(body);
+    const validatedData = leadWithEligibilitySchema.parse(body);
     console.log('[API] Data validated successfully');
 
     // Create lead in database
@@ -55,6 +94,24 @@ async function handleCreateLead(req: NextRequest) {
       },
     });
 
+    // Create eligibility result if provided
+    if (validatedData.eligibilityResult) {
+      await db.eligibilityResult.create({
+        data: {
+          leadId: lead.id,
+          tier: `Chapter ${validatedData.eligibilityResult.recommendedChapter}`,
+          rationale: JSON.stringify(validatedData.eligibilityResult.reasons),
+          metrics: JSON.stringify({
+            summary: validatedData.eligibilityResult.summary,
+            chapter7Eligibility: validatedData.eligibilityResult.chapter7Eligibility,
+            flags: validatedData.eligibilityResult.flags,
+          }),
+          disclaimers: JSON.stringify([validatedData.eligibilityResult.disclaimer]),
+        },
+      });
+      console.log('[API] Eligibility result stored');
+    }
+
     // Create audit log
     await db.auditLog.create({
       data: {
@@ -65,6 +122,7 @@ async function handleCreateLead(req: NextRequest) {
           state: lead.state,
           householdSize: lead.householdSize,
           county: lead.county,
+          hasEligibility: !!validatedData.eligibilityResult,
         }),
       },
     });
@@ -88,8 +146,100 @@ async function handleCreateLead(req: NextRequest) {
         text: userEmail.text,
       });
 
-      // Send staff notification email
-    const staffHtml = `
+      // Send staff notification email WITH eligibility
+      const staffHtml = generateStaffEmailHTML(lead, validatedData.eligibilityResult);
+      const staffText = generateStaffEmailText(lead, validatedData.eligibilityResult);
+
+      await mailgunProvider.send({
+        to: env.STAFF_LEADS_EMAIL!,
+        subject: `[LEAD] New Bankruptcy Lead: ${lead.email} (${lead.state})`,
+        html: staffHtml,
+        text: staffText,
+      });
+
+      logger.info('Emails sent successfully', { leadId: lead.id });
+    } else {
+      logger.info('Mailgun not configured - skipping email notifications', { leadId: lead.id });
+    }
+
+    return NextResponse.json({
+      success: true,
+      leadId: lead.id,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      logger.warn('Invalid lead data submitted', { errors: error.issues });
+      return NextResponse.json(
+        { error: 'Invalid data', details: error.issues },
+        { status: 400 }
+      );
+    }
+
+    // Check for unique constraint violation (duplicate email)
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      logger.warn('Duplicate email attempt', {
+        error: error.message,
+      });
+      return NextResponse.json(
+        { error: 'This email has already been submitted. If you need to update your information, please contact us directly.' },
+        { status: 409 }
+      );
+    }
+
+    console.error('[API] Error creating lead:', error);
+    logger.error('Failed to create lead', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return NextResponse.json(
+      {
+        error: 'Failed to create lead. Please try again.',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// Email generation functions
+function generateStaffEmailHTML(lead: any, eligibility: any) {
+  const eligibilitySection = eligibility ? `
+    <h2 style="color: #1F2937; margin-top: 24px;">Eligibility Assessment</h2>
+    <div style="background: #F3F4F6; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+      <div class="field">
+        <span class="label">Summary:</span>
+        <span class="value">${eligibility.summary}</span>
+      </div>
+      <div class="field">
+        <span class="label">Recommended Chapter:</span>
+        <span class="value" style="font-weight: bold; color: #059669;">Chapter ${eligibility.recommendedChapter}</span>
+      </div>
+      <div class="field">
+        <span class="label">Chapter 7 Eligibility:</span>
+        <span class="value">${eligibility.chapter7Eligibility}</span>
+      </div>
+      <div class="field">
+        <span class="label">Income Test:</span>
+        <span class="value">${eligibility.flags.incomePass ? '✓ Passes' : '✗ Does not pass'}</span>
+      </div>
+      <div class="field">
+        <span class="label">Budget Test:</span>
+        <span class="value">${eligibility.flags.budgetPass ? '✓ Passes' : '✗ Does not pass'}</span>
+      </div>
+      <div class="field">
+        <span class="label">Asset Risk:</span>
+        <span class="value">${eligibility.flags.assetRisk ? '⚠ Yes' : '✓ No'}</span>
+      </div>
+      <h3 style="color: #374151; margin-top: 16px; font-size: 14px;">Key Reasons:</h3>
+      <ul style="margin: 8px 0; padding-left: 20px;">
+        ${eligibility.reasons.map((r: string) => `<li style="color: #6B7280; margin: 4px 0;">${r}</li>`).join('')}
+      </ul>
+      <p style="color: #6B7280; font-size: 12px; margin-top: 12px;"><em>${eligibility.disclaimer}</em></p>
+    </div>
+  ` : '<p style="color: #6B7280;"><em>No eligibility assessment completed</em></p>';
+
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -149,6 +299,8 @@ async function handleCreateLead(req: NextRequest) {
         ${lead.propertyConcerns ? '<span class="badge badge-yes">Property Concerns</span>' : '<span class="badge badge-no">No Property Concerns</span>'}
       </div>
 
+      ${eligibilitySection}
+
       ${lead.notes ? `
       <h2>Additional Notes</h2>
       <div style="background: white; padding: 12px; border-radius: 4px; border: 1px solid #e5e7eb;">
@@ -165,9 +317,26 @@ async function handleCreateLead(req: NextRequest) {
   </div>
 </body>
 </html>
-    `.trim();
+  `.trim();
+}
 
-    const staffText = `
+function generateStaffEmailText(lead: any, eligibility: any) {
+  const eligibilitySection = eligibility ? `
+Eligibility Assessment:
+- Summary: ${eligibility.summary}
+- Recommended Chapter: Chapter ${eligibility.recommendedChapter}
+- Chapter 7 Eligibility: ${eligibility.chapter7Eligibility}
+- Income Test: ${eligibility.flags.incomePass ? 'Passes' : 'Does not pass'}
+- Budget Test: ${eligibility.flags.budgetPass ? 'Passes' : 'Does not pass'}
+- Asset Risk: ${eligibility.flags.assetRisk ? 'Yes' : 'No'}
+
+Key Reasons:
+${eligibility.reasons.map((r: string) => `- ${r}`).join('\n')}
+
+Disclaimer: ${eligibility.disclaimer}
+` : 'No eligibility assessment completed';
+
+  return `
 NEW UTAH BANKRUPTCY LEAD
 
 Contact Information:
@@ -189,63 +358,14 @@ Situation Indicators:
 - Wage Garnishment: ${lead.wageGarnishment ? 'Yes' : 'No'}
 - Property Concerns: ${lead.propertyConcerns ? 'Yes' : 'No'}
 
+${eligibilitySection}
+
 ${lead.notes ? `Additional Notes:\n${lead.notes}\n` : ''}
 ---
 Lead ID: ${lead.id}
 Source: ${lead.source}
 Received: ${new Date().toLocaleString('en-US', { timeZone: 'America/Denver' })}
-    `.trim();
-
-      await mailgunProvider.send({
-        to: env.STAFF_LEADS_EMAIL!,
-        subject: `[DEV - Staff Lead] New Bankruptcy Lead: ${lead.email} (${lead.state})`,
-        html: staffHtml,
-        text: staffText,
-      });
-
-      logger.info('Emails sent successfully', { leadId: lead.id });
-    } else {
-      logger.info('Mailgun not configured - skipping email notifications', { leadId: lead.id });
-    }
-
-    return NextResponse.json({
-      success: true,
-      leadId: lead.id,
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      logger.warn('Invalid lead data submitted', { errors: error.issues });
-      return NextResponse.json(
-        { error: 'Invalid data', details: error.issues },
-        { status: 400 }
-      );
-    }
-
-    // Check for unique constraint violation (duplicate email)
-    if (error instanceof Error && error.message.includes('Unique constraint')) {
-      logger.warn('Duplicate email attempt', {
-        error: error.message,
-      });
-      return NextResponse.json(
-        { error: 'This email has already been submitted. If you need to update your information, please contact us directly.' },
-        { status: 409 }
-      );
-    }
-
-    console.error('[API] Error creating lead:', error);
-    logger.error('Failed to create lead', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-
-    return NextResponse.json(
-      {
-        error: 'Failed to create lead. Please try again.',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
+  `.trim();
 }
 
 export async function POST(req: NextRequest) {

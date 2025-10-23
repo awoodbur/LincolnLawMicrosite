@@ -79,14 +79,15 @@ export default function EmailConsentPage() {
         }
       }
 
-      // Combine intake data with email/consent
+      // Combine intake data with email/consent and eligibility
       const leadData = {
         ...intakeData,
         ...data,
+        eligibilityResult: eligibilityResult,
         source: 'lincolnlaw-utah-intake',
       };
 
-      // Submit to API
+      // Submit to API (this creates the lead with eligibility)
       const response = await fetch('/api/leads/create', {
         method: 'POST',
         headers: {
@@ -102,14 +103,14 @@ export default function EmailConsentPage() {
 
       const result = await response.json();
 
-      // Store lead ID and email for next steps
+      // Store lead ID for Plaid page
       localStorage.setItem('lincoln-law-lead-id', result.leadId);
       localStorage.setItem('lincoln-law-email', data.email);
 
       // Clear intake data
       localStorage.removeItem(STORAGE_KEY);
 
-      // Navigate to Plaid link page (optional step)
+      // Navigate to Plaid link page (optional step to add Plaid data)
       router.push('/intake/link');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
