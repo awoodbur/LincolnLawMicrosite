@@ -10,12 +10,16 @@ import { leadSchema } from '@/lib/validation/intake';
 
 async function handleCreateLead(req: NextRequest) {
   try {
+    console.log('[API] /api/leads/create - Request received');
     const body = await req.json();
+    console.log('[API] Request body parsed successfully');
 
     // Validate incoming data
     const validatedData = leadSchema.parse(body);
+    console.log('[API] Data validated successfully');
 
     // Create lead in database
+    console.log('[API] Creating lead in database...');
     const lead = await db.lead.create({
       data: {
         state: validatedData.state,
@@ -228,13 +232,17 @@ Received: ${new Date().toLocaleString('en-US', { timeZone: 'America/Denver' })}
       );
     }
 
+    console.error('[API] Error creating lead:', error);
     logger.error('Failed to create lead', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
-      { error: 'Failed to create lead. Please try again.' },
+      {
+        error: 'Failed to create lead. Please try again.',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
