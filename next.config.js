@@ -3,6 +3,10 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  // Required for Prisma in serverless environment
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
+  },
   // Expose environment variables to serverless functions (API routes)
   env: {
     DATABASE_URL: process.env.DATABASE_URL,

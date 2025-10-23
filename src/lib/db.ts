@@ -5,9 +5,23 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
+// Get DATABASE_URL - in Amplify serverless, it might come from different sources
+function getDatabaseUrl(): string | undefined {
+  // Try various sources in order of preference
+  return (
+    process.env.DATABASE_URL ||
+    // @ts-ignore - Next.js env config
+    (typeof window === 'undefined' && global.process?.env?.DATABASE_URL)
+  );
+}
+
 // Log database configuration for debugging
 if (process.env.NODE_ENV === 'production') {
-  const dbUrl = process.env.DATABASE_URL;
+  const dbUrl = getDatabaseUrl();
+  console.log('[DB] Checking DATABASE_URL availability...');
+  console.log('[DB] DATABASE_URL present:', !!dbUrl);
+  console.log('[DB] All env vars:', Object.keys(process.env).filter(k => !k.includes('SECRET') && !k.includes('KEY')).join(', '));
+
   if (!dbUrl) {
     console.error('[DB] ERROR: DATABASE_URL is not set in production');
   } else if (!dbUrl.startsWith('postgresql://')) {
@@ -21,9 +35,23 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
-export const db = global.prisma || new PrismaClient({
+// Create Prisma Client with explicit datasource override for Amplify serverless
+const dbUrl = getDatabaseUrl();
+const prismaOptions: any = {
   log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['query', 'error', 'warn'],
-});
+};
+
+// In production, explicitly set the datasource URL if available
+if (process.env.NODE_ENV === 'production' && dbUrl) {
+  prismaOptions.datasources = {
+    db: {
+      url: dbUrl
+    }
+  };
+  console.log('[DB] Using explicit datasource URL for Prisma');
+}
+
+export const db = global.prisma || new PrismaClient(prismaOptions);
 
 if (process.env.NODE_ENV !== 'production') {
   global.prisma = db;
