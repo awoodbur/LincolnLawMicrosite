@@ -19,25 +19,37 @@ import type {
 } from './types';
 
 /**
- * Plaid client configuration
+ * Plaid client configuration (lazy-initialized)
  */
-const configuration = new Configuration({
-  basePath: PlaidEnvironments[env.PLAID_ENV as keyof typeof PlaidEnvironments],
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': env.PLAID_CLIENT_ID,
-      'PLAID-SECRET': env.PLAID_SECRET,
-    },
-  },
-});
+let plaidClient: PlaidApi | null = null;
 
-export const plaidClient = new PlaidApi(configuration);
+function getPlaidClient(): PlaidApi {
+  if (!env.PLAID_CLIENT_ID || !env.PLAID_SECRET) {
+    throw new Error('Plaid credentials not configured. Please set PLAID_CLIENT_ID and PLAID_SECRET environment variables.');
+  }
+
+  if (!plaidClient) {
+    const configuration = new Configuration({
+      basePath: PlaidEnvironments[env.PLAID_ENV as keyof typeof PlaidEnvironments],
+      baseOptions: {
+        headers: {
+          'PLAID-CLIENT-ID': env.PLAID_CLIENT_ID,
+          'PLAID-SECRET': env.PLAID_SECRET,
+        },
+      },
+    });
+    plaidClient = new PlaidApi(configuration);
+  }
+
+  return plaidClient;
+}
 
 /**
  * Create a Plaid Link token for the client-side integration
  */
 export async function createLinkToken(userId: string): Promise<PlaidLinkTokenResponse> {
   try {
+    const client = getPlaidClient();
     const request: LinkTokenCreateRequest = {
       user: {
         client_user_id: userId,
@@ -48,7 +60,7 @@ export async function createLinkToken(userId: string): Promise<PlaidLinkTokenRes
       language: 'en',
     };
 
-    const response = await plaidClient.linkTokenCreate(request);
+    const response = await client.linkTokenCreate(request);
 
     logger.info('Plaid link token created', { userId });
 
@@ -70,7 +82,8 @@ export async function createLinkToken(userId: string): Promise<PlaidLinkTokenRes
  */
 export async function exchangePublicToken(publicToken: string): Promise<PlaidExchangeResponse> {
   try {
-    const response = await plaidClient.itemPublicTokenExchange({
+    const client = getPlaidClient();
+    const response = await client.itemPublicTokenExchange({
       public_token: publicToken,
     });
 
@@ -98,13 +111,14 @@ export async function getTransactionSummary(
   endDate: string
 ): Promise<PlaidTransactionSummary> {
   try {
+    const client = getPlaidClient();
     const request: TransactionsGetRequest = {
       access_token: accessToken,
       start_date: startDate,
       end_date: endDate,
     };
 
-    const response = await plaidClient.transactionsGet(request);
+    const response = await client.transactionsGet(request);
     const transactions = response.data.transactions;
 
     // Calculate summary statistics
@@ -160,11 +174,12 @@ export async function getTransactionSummary(
  */
 export async function getIdentitySummary(accessToken: string): Promise<PlaidIdentitySummary> {
   try {
+    const client = getPlaidClient();
     const request: IdentityGetRequest = {
       access_token: accessToken,
     };
 
-    const response = await plaidClient.identityGet(request);
+    const response = await client.identityGet(request);
     const accounts = response.data.accounts;
 
     // Extract unique values across all accounts

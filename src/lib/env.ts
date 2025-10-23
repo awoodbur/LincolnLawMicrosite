@@ -18,9 +18,9 @@ const envSchema = z.object({
   MAILGUN_FROM: z.string().optional(), // Can be "Name <email@domain.com>" format
   STAFF_LEADS_EMAIL: z.string().email().optional(),
 
-  // Plaid
-  PLAID_CLIENT_ID: z.string().min(1),
-  PLAID_SECRET: z.string().min(1),
+  // Plaid (optional - only required for bank linking feature)
+  PLAID_CLIENT_ID: z.string().optional(),
+  PLAID_SECRET: z.string().optional(),
   PLAID_ENV: z.enum(['sandbox', 'development', 'production']).default('sandbox'),
   PLAID_PRODUCTS: z.string().default('transactions,identity'),
 
