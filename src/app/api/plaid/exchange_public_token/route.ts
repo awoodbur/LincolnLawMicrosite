@@ -78,6 +78,11 @@ async function handleExchangePublicToken(req: NextRequest) {
     const isTempLead = leadId.startsWith('temp_');
 
     if (!isTempLead) {
+      // NOTE: PlaidSummary model not implemented in current schema
+      // Plaid integration is currently disabled in production flow
+      // If you want to enable Plaid, add PlaidSummary model to prisma/schema.prisma
+
+      /* Disabled until PlaidSummary model is added to schema
       // Store access token in PlaidSummary (server-side only)
       // Check if PlaidSummary already exists
       const existingSummary = await db.plaidSummary.findUnique({
@@ -114,20 +119,20 @@ async function handleExchangePublicToken(req: NextRequest) {
           },
         });
       }
+      */
 
       // Create audit log
       await db.auditLog.create({
         data: {
           leadId,
-          actor: 'user',
           event: 'plaid_linked',
-          payloadJson: JSON.stringify({
+          details: {
             itemId: result.item_id,
             sandbox: true,
             transactionsCount: transactionsSummary.total,
             accountsCount: transactionsSummary.accounts,
             // Never log the access_token
-          }),
+          },
         },
       });
 

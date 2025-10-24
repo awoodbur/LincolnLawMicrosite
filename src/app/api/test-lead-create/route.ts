@@ -34,22 +34,39 @@ export async function POST(req: NextRequest) {
     console.log('[TEST-LEAD-CREATE] Creating lead in database...');
     const lead = await db.lead.create({
       data: {
+        // Contact
+        email: validatedData.email,
+        phone: validatedData.phone,
+
+        // Location
         state: validatedData.state,
         county: validatedData.county,
+
+        // Household
         householdSize: validatedData.householdSize,
         maritalStatus: validatedData.maritalStatus,
-        monthlyIncomeRange: validatedData.monthlyIncomeRange,
-        unsecuredDebtRange: validatedData.unsecuredDebtRange,
+
+        // Employment & History
         employmentStatus: validatedData.employmentStatus,
+        priorBankruptcy: false, // Default for test
+
+        // Financial Details
+        isAboveMedian: false, // Default for test
+        monthlyExpenses: 3000, // Default for test
+        totalDebt: '<$10k', // Default for test
+
+        // Assets
+        homeEquity: null,
+        vehicleEquity: 0,
+        hasValuableItems: false,
+
+        // Urgency Flags
         missedPayments: validatedData.missedPayments,
         wageGarnishment: validatedData.wageGarnishment,
         propertyConcerns: validatedData.propertyConcerns,
+
+        // Additional
         notes: validatedData.notes,
-        email: validatedData.email,
-        consentPrivacy: validatedData.consentPrivacy,
-        consentTerms: validatedData.consentTerms,
-        consentData: validatedData.consentData,
-        source: validatedData.source || 'lincolnlaw-utah-intake',
       },
     });
     console.log('[TEST-LEAD-CREATE] Lead created:', lead.id);

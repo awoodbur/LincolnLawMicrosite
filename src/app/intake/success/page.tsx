@@ -47,23 +47,23 @@ export default function SuccessPage() {
   }, []);
 
   return (
-    <div className="py-12">
+    <div className="py-12 min-h-screen">
       <div className="container mx-auto px-4 max-w-2xl">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-parchment/80 backdrop-blur-sm rounded-2xl cabin-shadow parchment-texture border-2 border-wood-light/30 p-8 md:p-10">
           {/* Success Icon */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-12 h-12 text-green-600" />
+            <div className="w-24 h-24 bg-forest-medium/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-forest-medium/40">
+              <CheckCircle className="w-14 h-14 text-forest-dark" strokeWidth={2} />
             </div>
-            <h1 className="font-serif text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="font-serif text-4xl md:text-5xl font-bold text-wood-dark mb-3">
               Thank You!
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-xl text-foreground/80 leading-relaxed">
               We've received your information and will be in touch shortly.
             </p>
             {email && (
-              <p className="text-sm text-gray-500 mt-2">
-                Confirmation sent to: <span className="font-medium">{email}</span>
+              <p className="text-sm text-muted-foreground mt-3">
+                Confirmation sent to: <span className="font-semibold text-wood-dark">{email}</span>
               </p>
             )}
           </div>
@@ -71,17 +71,17 @@ export default function SuccessPage() {
           {/* Eligibility Results (if available) */}
           {eligibility && (
             <div className="mb-8">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+              <div className="bg-gradient-to-r from-wood-light/20 to-parchment rounded-lg p-6 border-2 border-wood-light/40 cabin-shadow">
                 <div className="flex items-center mb-4">
-                  <FileText className="w-6 h-6 text-blue-600 mr-2" />
-                  <h2 className="font-semibold text-xl text-gray-900">
+                  <FileText className="w-6 h-6 text-forest-dark mr-2" />
+                  <h2 className="font-serif font-semibold text-xl text-wood-dark">
                     Preliminary Eligibility Assessment
                   </h2>
                 </div>
 
                 {/* Summary */}
                 <div className="mb-4">
-                  <p className="text-gray-700 mb-2">{eligibility.summary}</p>
+                  <p className="text-foreground/80 mb-2">{eligibility.summary}</p>
 
                   {/* Eligibility Badge */}
                   <div className="inline-flex items-center px-4 py-2 rounded-full font-semibold text-sm mt-2"
@@ -102,61 +102,61 @@ export default function SuccessPage() {
 
                   {/* Recommended Chapter */}
                   <div className="mt-3">
-                    <p className="text-sm text-gray-600">
-                      <strong>Recommended Chapter:</strong> Chapter {eligibility.recommendedChapter}
+                    <p className="text-sm text-foreground/70">
+                      <strong className="text-wood-dark">Recommended Chapter:</strong> Chapter {eligibility.recommendedChapter}
                     </p>
                   </div>
                 </div>
 
                 {/* Assessment Breakdown */}
                 <div className="space-y-3 mb-4">
-                  <h3 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">
+                  <h3 className="font-semibold text-wood-dark text-sm uppercase tracking-wide">
                     Assessment Details
                   </h3>
 
                   {/* Income Assessment */}
-                  <div className="flex items-start space-x-3 bg-white rounded-md p-3">
+                  <div className="flex items-start space-x-3 bg-parchment/50 rounded-md p-3 border border-wood-light/30">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      eligibility.flags.incomePass ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                      eligibility.flags.incomePass ? 'bg-forest-medium/20 text-forest-dark' : 'bg-burgundy/20 text-burgundy'
                     }`}>
                       {eligibility.flags.incomePass ? '✓' : '✗'}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">Income Assessment</p>
-                      <p className="text-xs text-gray-600">{eligibility.reasons[0]}</p>
+                      <p className="font-medium text-wood-dark text-sm">Income Assessment</p>
+                      <p className="text-xs text-foreground/70">{eligibility.reasons[0]}</p>
                     </div>
                   </div>
 
                   {/* Budget Assessment */}
-                  <div className="flex items-start space-x-3 bg-white rounded-md p-3">
+                  <div className="flex items-start space-x-3 bg-parchment/50 rounded-md p-3 border border-wood-light/30">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      eligibility.flags.budgetPass ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                      eligibility.flags.budgetPass ? 'bg-forest-medium/20 text-forest-dark' : 'bg-burgundy/20 text-burgundy'
                     }`}>
                       {eligibility.flags.budgetPass ? '✓' : '✗'}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">Budget Assessment</p>
-                      <p className="text-xs text-gray-600">{eligibility.reasons[1]}</p>
+                      <p className="font-medium text-wood-dark text-sm">Budget Assessment</p>
+                      <p className="text-xs text-foreground/70">{eligibility.reasons[1]}</p>
                     </div>
                   </div>
 
                   {/* Asset Assessment */}
-                  <div className="flex items-start space-x-3 bg-white rounded-md p-3">
+                  <div className="flex items-start space-x-3 bg-parchment/50 rounded-md p-3 border border-wood-light/30">
                     <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      !eligibility.flags.assetRisk ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                      !eligibility.flags.assetRisk ? 'bg-forest-medium/20 text-forest-dark' : 'bg-burgundy/20 text-burgundy'
                     }`}>
                       {!eligibility.flags.assetRisk ? '✓' : '✗'}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">Asset Assessment</p>
-                      <p className="text-xs text-gray-600">{eligibility.reasons[2]}</p>
+                      <p className="font-medium text-wood-dark text-sm">Asset Assessment</p>
+                      <p className="text-xs text-foreground/70">{eligibility.reasons[2]}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Disclaimer */}
-                <div className="bg-white rounded-md p-3 border border-gray-200">
-                  <p className="text-xs text-gray-600 italic">
+                <div className="bg-parchment/60 rounded-md p-3 border border-wood-medium/30">
+                  <p className="text-xs text-foreground/70 italic">
                     <Shield className="inline w-3 h-3 mr-1" />
                     {eligibility.disclaimer}
                   </p>
@@ -167,51 +167,51 @@ export default function SuccessPage() {
 
           {/* What Happens Next */}
           <div className="mb-8">
-            <h2 className="font-semibold text-xl text-gray-900 mb-4 text-center">
+            <h2 className="font-serif font-semibold text-xl text-wood-dark mb-4 text-center">
               What Happens Next?
             </h2>
 
             <div className="space-y-4">
-              <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white font-semibold">
+              <div className="flex items-start space-x-4 p-4 bg-wood-light/10 rounded-lg border border-wood-light/30">
+                <div className="w-8 h-8 bg-forest-dark rounded-full flex items-center justify-center flex-shrink-0 text-parchment font-semibold">
                   1
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">
-                    <Mail className="inline w-4 h-4 mr-1" />
+                  <h3 className="font-semibold text-wood-dark mb-1">
+                    <Mail className="inline w-4 h-4 mr-1 text-forest-dark" />
                     Review Your Submission
                   </h3>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-foreground/70">
                     Our team will carefully review your financial information and situation within the next 24 hours.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white font-semibold">
+              <div className="flex items-start space-x-4 p-4 bg-wood-light/10 rounded-lg border border-wood-light/30">
+                <div className="w-8 h-8 bg-forest-dark rounded-full flex items-center justify-center flex-shrink-0 text-parchment font-semibold">
                   2
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">
-                    <Phone className="inline w-4 h-4 mr-1" />
+                  <h3 className="font-semibold text-wood-dark mb-1">
+                    <Phone className="inline w-4 h-4 mr-1 text-forest-dark" />
                     Personalized Assessment
                   </h3>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-foreground/70">
                     A Utah bankruptcy attorney will reach out to discuss your options and answer any questions you may have.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 text-white font-semibold">
+              <div className="flex items-start space-x-4 p-4 bg-wood-light/10 rounded-lg border border-wood-light/30">
+                <div className="w-8 h-8 bg-forest-dark rounded-full flex items-center justify-center flex-shrink-0 text-parchment font-semibold">
                   3
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">
-                    <Calendar className="inline w-4 h-4 mr-1" />
+                  <h3 className="font-semibold text-wood-dark mb-1">
+                    <Calendar className="inline w-4 h-4 mr-1 text-forest-dark" />
                     Next Steps
                   </h3>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-foreground/70">
                     If bankruptcy is right for you, we'll guide you through each step of the process with clarity and compassion.
                   </p>
                 </div>
@@ -237,14 +237,13 @@ export default function SuccessPage() {
             </Link>
 
             <div className="text-center pt-4">
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-foreground/70 mb-4">
                 Have questions? Need to speak with us immediately?
               </p>
-              <p className="text-sm">
-                <a href="tel:+1234567890" className="text-blue-600 hover:underline font-medium">
-                  Call us: (123) 456-7890
-                </a>
-              </p>
+              <a href="tel:+13854388161" className="inline-flex items-center bg-wood-dark hover:bg-wood-dark/90 text-parchment px-6 py-3 rounded-lg font-semibold transition-colors">
+                <Phone className="mr-2 w-5 h-5" />
+                Call Us: (385) 438-8161
+              </a>
             </div>
           </div>
 

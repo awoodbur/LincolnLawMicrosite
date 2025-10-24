@@ -195,26 +195,27 @@ export default function FAQPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-parchment via-background to-parchment">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
-        <div className="container mx-auto px-4 max-w-6xl">
+      <div className="bg-gradient-to-r from-wood-dark via-forest-dark to-wood-dark text-parchment py-16 wood-texture relative">
+        <div className="absolute inset-0 bg-forest-dark/20"></div>
+        <div className="container mx-auto px-4 max-w-6xl relative">
           <button
             onClick={handleBack}
-            className="text-white hover:text-blue-100 text-sm flex items-center mb-6 transition-colors"
+            className="text-parchment hover:text-gold text-sm flex items-center mb-6 transition-colors font-semibold"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </button>
           <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
-              <HelpCircle className="w-8 h-8" />
+            <div className="w-16 h-16 bg-parchment/20 rounded-full flex items-center justify-center border-2 border-gold/30">
+              <HelpCircle className="w-8 h-8 text-gold" />
             </div>
           </div>
           <h1 className="font-serif text-4xl md:text-5xl font-bold text-center mb-4">
             Bankruptcy FAQ
           </h1>
-          <p className="text-xl text-blue-100 text-center max-w-3xl mx-auto">
+          <p className="text-xl text-parchment/90 text-center max-w-3xl mx-auto">
             Get answers to common questions about bankruptcy in Utah
           </p>
         </div>
@@ -222,16 +223,16 @@ export default function FAQPage() {
 
       {/* Category Filter */}
       <div className="container mx-auto px-4 max-w-6xl -mt-8">
-        <div className="bg-white rounded-lg shadow-lg p-4 mb-8">
+        <div className="bg-parchment/90 backdrop-blur-sm rounded-lg cabin-shadow parchment-texture border-2 border-wood-light/30 p-4 mb-8">
           <div className="flex flex-wrap gap-2 justify-center">
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
                   selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-wood-dark text-parchment cabin-shadow'
+                    : 'bg-wood-light/20 text-wood-dark hover:bg-wood-light/40'
                 }`}
               >
                 {category.label}
@@ -247,25 +248,25 @@ export default function FAQPage() {
           {filteredFaqs.map((faq, index) => (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-lg"
+              className="bg-parchment/80 backdrop-blur-sm rounded-lg cabin-shadow parchment-texture border border-wood-light/30 overflow-hidden transition-all hover:shadow-xl"
             >
               <button
                 onClick={() => toggleItem(index)}
-                className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-wood-light/10 transition-colors"
               >
-                <span className="font-semibold text-gray-900 pr-8">
+                <span className="font-semibold text-wood-dark pr-8">
                   {faq.question}
                 </span>
                 {openItems.has(index) ? (
-                  <ChevronUp className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <ChevronUp className="w-5 h-5 text-forest-dark flex-shrink-0" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <ChevronDown className="w-5 h-5 text-wood-medium flex-shrink-0" />
                 )}
               </button>
 
               {openItems.has(index) && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                  <p className="text-gray-700 leading-relaxed">
+                <div className="px-6 py-4 bg-wood-light/5 border-t border-wood-light/30">
+                  <p className="text-foreground/80 leading-relaxed">
                     {faq.answer}
                   </p>
                 </div>
@@ -276,43 +277,46 @@ export default function FAQPage() {
 
         {filteredFaqs.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500">No questions found in this category.</p>
+            <p className="text-muted-foreground">No questions found in this category.</p>
           </div>
         )}
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-amber-500 to-amber-600 py-16">
-        <div className="container mx-auto px-4 max-w-4xl text-center">
-          <h2 className="font-serif text-3xl font-bold text-white mb-4">
+      <div className="relative bg-gradient-to-r from-wood-dark via-forest-dark to-wood-dark py-16 wood-texture overflow-hidden">
+        <div className="absolute inset-0 bg-forest-dark/20"></div>
+        <div className="absolute top-0 left-0 w-32 h-32 border-t-4 border-l-4 border-gold/30"></div>
+        <div className="absolute bottom-0 right-0 w-32 h-32 border-b-4 border-r-4 border-gold/30"></div>
+        <div className="container mx-auto px-4 max-w-4xl text-center relative">
+          <h2 className="font-serif text-3xl font-bold text-parchment mb-4">
             Still Have Questions?
           </h2>
-          <p className="text-amber-100 text-lg mb-8 max-w-2xl mx-auto">
+          <p className="text-parchment/90 text-lg mb-8 max-w-2xl mx-auto">
             Every bankruptcy case is unique. Get personalized answers and find out if bankruptcy is right for you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/intake"
-              className="inline-block bg-white text-amber-600 px-8 py-3 rounded-lg font-semibold hover:bg-amber-50 transition-colors shadow-lg"
+              className="inline-block bg-parchment text-wood-dark px-8 py-3 rounded-lg font-semibold hover:bg-parchment/90 transition-all duration-200 hover:scale-105 cabin-shadow"
             >
               Check Your Options
             </Link>
             <a
-              href="tel:8017171210"
-              className="inline-block bg-amber-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-amber-800 transition-colors"
+              href="tel:+13854388161"
+              className="inline-block bg-gold text-wood-dark px-8 py-3 rounded-lg font-semibold hover:bg-gold/90 transition-all duration-200 hover:scale-105 cabin-shadow"
             >
-              Call (801) 717-1210
+              Call (385) 438-8161
             </a>
           </div>
         </div>
       </div>
 
       {/* Disclaimer */}
-      <div className="bg-gray-100 py-8">
+      <div className="bg-wood-light/10 py-8">
         <div className="container mx-auto px-4 max-w-4xl">
-          <div className="bg-white rounded-lg p-6 border-l-4 border-blue-600">
-            <p className="text-sm text-gray-700">
-              <strong>Disclaimer:</strong> The information provided on this page is for general informational purposes only and does not constitute legal advice. Bankruptcy laws are complex and vary based on individual circumstances. For advice specific to your situation, please consult with a qualified bankruptcy attorney. Lincoln Law serves clients throughout Utah.
+          <div className="bg-parchment/90 backdrop-blur-sm rounded-lg p-6 border-l-4 border-burgundy cabin-shadow">
+            <p className="text-sm text-foreground/80">
+              <strong className="text-wood-dark">Disclaimer:</strong> The information provided on this page is for general informational purposes only and does not constitute legal advice. Bankruptcy laws are complex and vary based on individual circumstances. For advice specific to your situation, please consult with a qualified bankruptcy attorney. Lincoln Law serves clients throughout Utah.
             </p>
           </div>
         </div>

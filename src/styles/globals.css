@@ -2,28 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom fonts - Lincoln era inspired */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Rokkitt:wght@300;400;500;600;700&display=swap');
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 38 92% 50%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
+    /* Cabin-inspired warm color palette */
+    --background: 43 30% 96%;         /* Warm cream/parchment */
+    --foreground: 25 35% 15%;         /* Deep warm brown */
+    --card: 40 25% 98%;               /* Light warm white */
+    --card-foreground: 25 35% 15%;
+    --popover: 40 25% 98%;
+    --popover-foreground: 25 35% 15%;
+    --primary: 25 60% 40%;            /* Rich mahogany brown */
+    --primary-foreground: 43 30% 96%;
+    --secondary: 140 25% 35%;         /* Deep forest green */
+    --secondary-foreground: 43 30% 96%;
+    --muted: 40 20% 90%;              /* Soft taupe */
+    --muted-foreground: 25 20% 40%;
+    --accent: 38 75% 48%;             /* Warm amber/gold */
+    --accent-foreground: 25 35% 15%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 43 30% 96%;
+    --border: 35 20% 85%;             /* Soft tan border */
+    --input: 35 20% 85%;
+    --ring: 25 60% 40%;
+    --radius: 0.75rem;                /* Slightly more rounded for organic feel */
+
+    /* Custom cabin-themed colors */
+    --wood-dark: 25 60% 30%;          /* Dark walnut */
+    --wood-medium: 30 45% 45%;        /* Honey wood */
+    --wood-light: 35 40% 65%;         /* Light oak */
+    --parchment: 43 40% 95%;          /* Aged paper */
+    --forest-dark: 140 30% 25%;       /* Deep pine */
+    --forest-medium: 140 25% 40%;     /* Moss green */
+    --burgundy: 0 45% 35%;            /* Deep burgundy for accents */
+    --gold: 45 80% 55%;               /* Warm gold */
   }
 }
 
@@ -31,10 +45,65 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    /* Subtle texture overlay for warmth */
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(139, 69, 19, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(34, 139, 34, 0.02) 0%, transparent 50%);
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
   }
 }
 
-/* Custom fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700;900&display=swap');
+/* Wood grain texture utility classes */
+@layer utilities {
+  .wood-texture {
+    background-image:
+      linear-gradient(90deg, rgba(139, 69, 19, 0.05) 1px, transparent 1px),
+      linear-gradient(rgba(139, 69, 19, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px, 10px 10px;
+  }
+
+  .cabin-shadow {
+    box-shadow:
+      0 4px 6px -1px rgba(101, 67, 33, 0.1),
+      0 2px 4px -1px rgba(101, 67, 33, 0.06),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .parchment-texture {
+    background-color: hsl(var(--parchment));
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(139, 69, 19, 0.02) 2px,
+        rgba(139, 69, 19, 0.02) 4px
+      );
+  }
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--wood-medium));
+  border-radius: 6px;
+  border: 2px solid hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--wood-dark));
+}

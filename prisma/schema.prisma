@@ -10,80 +10,107 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Lead Model - Core intake data
 model Lead {
-  id                 String   @id @default(cuid())
-  state              String   @default("Utah")
-  county             String?
-  householdSize      Int
-  maritalStatus      String
-  monthlyIncomeRange String
-  unsecuredDebtRange String
-  employmentStatus   String
-  missedPayments     Boolean
-  wageGarnishment    Boolean
-  propertyConcerns   Boolean
-  notes              String?
-  email              String   @unique
-  consentPrivacy     Boolean
-  consentTerms       Boolean
-  consentData        Boolean
-  source             String   @default("lincolnlaw-utah-intake")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                String    @id @default(cuid())
 
-  // Optional relations for later extensions
-  plaidSummary       PlaidSummary?
-  eligibilityResult  EligibilityResult?
-  consentLogs        ConsentLog[]
-  auditLogs          AuditLog[]
+  // Contact
+  email             String
+  phone             String?
+
+  // Location
+  state             String    // Should always be "Utah" for now
+  county            String?
+
+  // Household
+  householdSize     Int       // 1-7, or 8 for "8+"
+  maritalStatus     String    // "Single", "Married", "Separated", "Divorced"
+
+  // Employment & History
+  employmentStatus  String    // "Employed", "Self-employed", "Unemployed", "Retired"
+  priorBankruptcy   Boolean   @default(false)
+
+  // Financial Details
+  isAboveMedian     Boolean   @default(false) // Is income above Utah median for household size?
+  monthlyExpenses   Float     @default(0)     // Necessary living expenses
+  totalDebt         String    @default("<$10k") // Range: "<10000", "10000-25000", "25000-50000", ">50000"
+
+  // Assets
+  homeEquity        Float?    // null if doesn't own home
+  vehicleEquity     Float     @default(0)
+  hasValuableItems  Boolean   @default(false)
+
+  // Urgency Flags
+  missedPayments    Boolean   @default(false)
+  wageGarnishment   Boolean   @default(false)
+  propertyConcerns  Boolean   @default(false)
+
+  // Additional
+  notes             String?
+
+  // Metadata
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  consentLogs       ConsentLog[]
+  eligibilityResult EligibilityResult?
+  auditLogs         AuditLog[]
 
   @@index([email])
   @@index([createdAt])
 }
 
-model PlaidSummary {
-  id            String   @id @default(cuid())
-  leadId        String   @unique
-  lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  transactions  String?  // JSON string
-  identity      String?  // JSON string
-  summaryJson   String?  // JSON string
-  createdAt     DateTime @default(now())
-}
-
+// Eligibility Assessment Results
 model EligibilityResult {
-  id             String   @id @default(cuid())
-  leadId         String   @unique
-  lead           Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  tier           String
-  rationale      String   // JSON string
-  metrics        String   // JSON string
-  disclaimers    String   // JSON string
-  createdAt      DateTime @default(now())
-}
+  id                String   @id @default(cuid())
+  leadId            String   @unique
+  lead              Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
-model ConsentLog {
-  id          String   @id @default(cuid())
-  leadId      String
-  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  version     String   @default("v1.0")
-  acceptedAt  DateTime @default(now())
-  ip          String?
-  userAgent   String?
+  summary           String   @default("Pending evaluation") // "Chapter 7 Likely", "Chapter 13 Recommended", etc.
+  recommendedChapter String  @default("7") // "7" or "13"
+  chapter7Eligible  Boolean @default(true)
+
+  // Test Results
+  incomeTestPass    Boolean @default(true)
+  budgetTestPass    Boolean @default(true)
+  assetRisk         Boolean @default(false)
+
+  reasons           String[] @default([]) // Array of key reasons
+  disclaimer        String   @default("This is a preliminary assessment only.")
+
+  createdAt         DateTime @default(now())
 
   @@index([leadId])
 }
 
+// Consent Tracking
+model ConsentLog {
+  id              String   @id @default(cuid())
+  leadId          String
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  consentType     String   @default("all") // "privacy_policy", "terms_of_service", "consent_disclosure", "all"
+  consentVersion  String   @default("v1.0") // Version number of the document
+  ipAddress       String?
+  userAgent       String?
+  timestamp       DateTime @default(now())
+
+  @@index([leadId])
+}
+
+// Audit Log for compliance
 model AuditLog {
   id          String   @id @default(cuid())
   leadId      String?
   lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
-  actor       String   // "system", "user", "admin"
-  event       String   // "lead_created", "consent_accepted", "plaid_linked", etc.
-  payloadJson String?  // Redacted summary, never includes PII/tokens
-  createdAt   DateTime @default(now())
+
+  event       String   // "lead_created", "email_sent", etc.
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime @default(now())
 
   @@index([leadId])
-  @@index([event])
-  @@index([createdAt])
+  @@index([timestamp])
 }

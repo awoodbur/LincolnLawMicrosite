@@ -26,7 +26,7 @@ const config = {
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--foreground))",
+          foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -52,6 +52,19 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Custom cabin colors
+        wood: {
+          dark: "hsl(var(--wood-dark))",
+          medium: "hsl(var(--wood-medium))",
+          light: "hsl(var(--wood-light))",
+        },
+        parchment: "hsl(var(--parchment))",
+        forest: {
+          dark: "hsl(var(--forest-dark))",
+          medium: "hsl(var(--forest-medium))",
+        },
+        burgundy: "hsl(var(--burgundy))",
+        gold: "hsl(var(--gold))",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -73,8 +86,9 @@ const config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Merriweather', 'Georgia', 'serif'],
+        sans: ['Lora', 'Crimson Text', 'Georgia', 'serif'],
+        serif: ['Playfair Display', 'Crimson Text', 'Georgia', 'serif'],
+        display: ['Rokkitt', 'serif'],
       },
     },
   },

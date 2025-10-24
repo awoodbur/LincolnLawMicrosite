@@ -12,27 +12,28 @@ export default function TermsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white py-12">
+    <div className="min-h-screen py-12">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={handleBack}
-            className="text-blue-600 hover:underline text-sm flex items-center"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </button>
-          <h1 className="font-serif text-4xl font-bold text-gray-900 mt-4 mb-2">
-            Terms of Service
-          </h1>
-          <p className="text-gray-600">
-            Last Updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-          </p>
-        </div>
+        <div className="bg-parchment/80 backdrop-blur-sm rounded-2xl cabin-shadow parchment-texture border-2 border-wood-light/30 p-8 md:p-10">
+          {/* Header */}
+          <div className="mb-8">
+            <button
+              onClick={handleBack}
+              className="text-wood-medium hover:text-wood-dark text-sm flex items-center font-semibold transition-colors mb-6"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Back
+            </button>
+            <h1 className="font-serif text-4xl md:text-5xl font-bold text-wood-dark mb-3">
+              Terms of Service
+            </h1>
+            <p className="text-muted-foreground">
+              Last Updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
 
-        {/* Content */}
-        <div className="prose prose-blue max-w-none">
+          {/* Content */}
+          <div className="prose prose-lg max-w-none">
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Agreement to Terms</h2>
             <p className="text-gray-700 mb-4">
@@ -200,28 +201,29 @@ export default function TermsPage() {
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
               <p className="text-gray-900 font-semibold mb-2">Lincoln Law</p>
-              <p className="text-gray-700">Email: legal@lincolnlaw.example.com</p>
-              <p className="text-gray-700">Phone: (801) 717-1210</p>
+              <p className="text-gray-700">Email: help@lincolnlaw.com</p>
+              <p className="text-gray-700">Phone: (385) 438-8161</p>
               <p className="text-gray-700">Address: 921 West Center St., Orem, UT 84057</p>
             </div>
           </section>
-        </div>
+          </div>
 
-        {/* Footer Navigation */}
-        <div className="mt-12 pt-8 border-t border-gray-200">
-          <div className="flex flex-wrap gap-4 justify-center text-sm">
-            <Link href="/legal/privacy" className="text-blue-600 hover:underline">
-              Privacy Policy
-            </Link>
-            <Link href="/legal/consent" className="text-blue-600 hover:underline">
-              Consent Disclosure
-            </Link>
-            <Link href="/faq" className="text-blue-600 hover:underline">
-              FAQ
-            </Link>
-            <Link href="/" className="text-blue-600 hover:underline">
-              Return Home
-            </Link>
+          {/* Footer Navigation */}
+          <div className="mt-12 pt-8 border-t border-wood-light/30">
+            <div className="flex flex-wrap gap-4 justify-center text-sm">
+              <Link href="/legal/privacy" className="text-wood-medium hover:text-wood-dark font-semibold transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/legal/consent" className="text-wood-medium hover:text-wood-dark font-semibold transition-colors">
+                Consent Disclosure
+              </Link>
+              <Link href="/faq" className="text-wood-medium hover:text-wood-dark font-semibold transition-colors">
+                FAQ
+              </Link>
+              <Link href="/" className="text-wood-medium hover:text-wood-dark font-semibold transition-colors">
+                Return Home
+              </Link>
+            </div>
           </div>
         </div>
       </div>

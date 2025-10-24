@@ -18,9 +18,9 @@ const variantConfig: Record<InfoCardVariant, {
   defaultIcon: LucideIcon;
 }> = {
   info: {
-    containerClass: 'bg-blue-50 border-blue-200',
-    iconClass: 'text-blue-600',
-    titleClass: 'text-blue-900',
+    containerClass: 'bg-wood-light/10 border-wood-light/30',
+    iconClass: 'text-forest-dark',
+    titleClass: 'text-wood-dark',
     defaultIcon: Info,
   },
   success: {
@@ -76,7 +76,7 @@ export function InfoCard({
               {title}
             </h3>
           )}
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-foreground/70">
             {children}
           </div>
         </div>

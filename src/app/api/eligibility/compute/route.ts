@@ -50,29 +50,25 @@ async function handleComputeEligibility(req: NextRequest) {
     //   }
     // }
 
-    // Fall back to questionnaire data
-    // Parse income range (e.g., "<$3k" -> estimate midpoint)
-    const incomeRangeMap: Record<string, number> = {
-      '<$3k': 2000,
-      '$3–5k': 4000,
-      '$5–8k': 6500,
-      '$8k+': 10000,
-    };
-    monthlyIncomeEstimate = incomeRangeMap[lead.monthlyIncomeRange] || 4000;
+    // Use detailed financial data from the form
+    // We now collect actual financial data instead of ranges
 
     // Parse debt range and estimate monthly payments
     const debtRangeMap: Record<string, number> = {
       '<$10k': 5000,
-      '$10–25k': 17500,
-      '$25–50k': 37500,
+      '$10-25k': 17500,
+      '$25-50k': 37500,
       '$50k+': 75000,
     };
-    const totalDebt = debtRangeMap[lead.unsecuredDebtRange] || 17500;
+    const totalDebt = debtRangeMap[lead.totalDebt] || 17500;
     // Rough estimate: 3% of total debt as monthly payment
     monthlyDebtPaymentsEstimate = totalDebt * 0.03;
 
-    // Estimate cashflow
-    cashflowMonthly = monthlyIncomeEstimate - monthlyDebtPaymentsEstimate - monthlyIncomeEstimate * 0.5; // Assume 50% for other expenses
+    // Calculate cashflow from actual monthly expenses
+    // Estimate income from median threshold and expenses
+    const monthlyExpenses = lead.monthlyExpenses || 3000;
+    monthlyIncomeEstimate = lead.isAboveMedian ? monthlyExpenses * 1.3 : monthlyExpenses * 0.9; // Rough estimate
+    cashflowMonthly = monthlyIncomeEstimate - monthlyExpenses - monthlyDebtPaymentsEstimate;
 
     // Evaluate eligibility
     const eligibilityResult = evaluateEligibility({
@@ -84,13 +80,18 @@ async function handleComputeEligibility(req: NextRequest) {
     });
 
     // Store eligibility result (using EligibilityResult model from schema)
+    // Note: This route may be deprecated - the main flow uses /api/eligibility/evaluate
     await db.eligibilityResult.create({
       data: {
         leadId: lead.id,
-        tier: eligibilityResult.tier,
-        rationale: JSON.stringify(eligibilityResult.rationale),
-        metrics: JSON.stringify(eligibilityResult.metrics),
-        disclaimers: JSON.stringify(eligibilityResult.disclaimers),
+        summary: eligibilityResult.tier || 'Evaluation needed',
+        recommendedChapter: '7', // Default
+        chapter7Eligible: true, // Default
+        incomeTestPass: true,
+        budgetTestPass: true,
+        assetRisk: false,
+        reasons: eligibilityResult.rationale || [],
+        disclaimer: eligibilityResult.disclaimers?.[0] || 'This is a preliminary assessment only.',
       },
     });
 
@@ -98,12 +99,11 @@ async function handleComputeEligibility(req: NextRequest) {
     await db.auditLog.create({
       data: {
         leadId: lead.id,
-        actor: 'system',
         event: 'eligibility_computed',
-        payloadJson: JSON.stringify({
+        details: {
           tier: eligibilityResult.tier,
           usedPlaidData: false, // Plaid not currently integrated
-        }),
+        },
       },
     });
 

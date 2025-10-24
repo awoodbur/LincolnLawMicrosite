@@ -15,9 +15,22 @@ const leadWithEligibilitySchema = z.object({
   county: z.string().optional(),
   householdSize: z.number().min(1).max(8),
   maritalStatus: z.enum(['Single', 'Married', 'Separated']),
-  monthlyIncomeRange: z.enum(['<$3k', '$3–5k', '$5–8k', '$8k+']),
-  unsecuredDebtRange: z.enum(['<$10k', '$10–25k', '$25–50k', '$50k+']),
   employmentStatus: z.enum(['Employed', 'Self-employed', 'Unemployed', 'Retired']),
+  priorBankruptcy: z.boolean().optional(),
+
+  // Old fields (for backwards compatibility)
+  monthlyIncomeRange: z.enum(['<$3k', '$3–5k', '$5–8k', '$8k+']).optional(),
+  unsecuredDebtRange: z.enum(['<$10k', '$10–25k', '$25–50k', '$50k+']).optional(),
+
+  // New detailed financial fields
+  incomeAboveThreshold: z.boolean().optional(),
+  monthlyExpenses: z.number().min(0).optional(),
+  unsecuredDebt: z.enum(['<$10k', '$10-25k', '$25-50k', '$50k+']).optional(),
+  homeEquity: z.union([z.number().min(0), z.literal('NA')]).optional(),
+  vehicleEquity: z.number().min(0).optional(),
+  hasValuableAssets: z.boolean().optional(),
+
+  // Urgency flags
   missedPayments: z.boolean(),
   wageGarnishment: z.boolean(),
   propertyConcerns: z.boolean(),
@@ -25,6 +38,7 @@ const leadWithEligibilitySchema = z.object({
 
   // Email + consent fields
   email: z.string().email(),
+  phone: z.string().optional(),
   consentPrivacy: z.boolean(),
   consentTerms: z.boolean(),
   consentData: z.boolean(),
@@ -61,35 +75,53 @@ async function handleCreateLead(req: NextRequest) {
     console.log('[API] Creating lead in database...');
     const lead = await db.lead.create({
       data: {
+        // Contact
+        email: validatedData.email,
+        phone: validatedData.phone,
+
+        // Location
         state: validatedData.state,
         county: validatedData.county,
+
+        // Household
         householdSize: validatedData.householdSize,
         maritalStatus: validatedData.maritalStatus,
-        monthlyIncomeRange: validatedData.monthlyIncomeRange,
-        unsecuredDebtRange: validatedData.unsecuredDebtRange,
+
+        // Employment & History
         employmentStatus: validatedData.employmentStatus,
+        priorBankruptcy: validatedData.priorBankruptcy ?? false,
+
+        // Financial Details (map form fields to schema fields)
+        isAboveMedian: validatedData.incomeAboveThreshold ?? false,
+        monthlyExpenses: validatedData.monthlyExpenses ?? 0,
+        totalDebt: validatedData.unsecuredDebt ?? validatedData.unsecuredDebtRange ?? '<$10k',
+
+        // Assets (handle 'NA' for homeEquity)
+        homeEquity: validatedData.homeEquity === 'NA' ? null : (validatedData.homeEquity ?? null),
+        vehicleEquity: validatedData.vehicleEquity ?? 0,
+        hasValuableItems: validatedData.hasValuableAssets ?? false,
+
+        // Urgency Flags
         missedPayments: validatedData.missedPayments,
         wageGarnishment: validatedData.wageGarnishment,
         propertyConcerns: validatedData.propertyConcerns,
+
+        // Additional
         notes: validatedData.notes,
-        email: validatedData.email,
-        consentPrivacy: validatedData.consentPrivacy,
-        consentTerms: validatedData.consentTerms,
-        consentData: validatedData.consentData,
-        source: validatedData.source || 'lincolnlaw-utah-intake',
       },
     });
 
     // Create consent log
     const forwarded = req.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0] : req.headers.get('x-real-ip') || 'unknown';
+    const ipAddress = forwarded ? forwarded.split(',')[0] : req.headers.get('x-real-ip') || 'unknown';
     const userAgent = req.headers.get('user-agent') || 'unknown';
 
     await db.consentLog.create({
       data: {
         leadId: lead.id,
-        version: 'v1.0',
-        ip,
+        consentType: 'all',
+        consentVersion: 'v1.0',
+        ipAddress,
         userAgent,
       },
     });
@@ -99,14 +131,14 @@ async function handleCreateLead(req: NextRequest) {
       await db.eligibilityResult.create({
         data: {
           leadId: lead.id,
-          tier: `Chapter ${validatedData.eligibilityResult.recommendedChapter}`,
-          rationale: JSON.stringify(validatedData.eligibilityResult.reasons),
-          metrics: JSON.stringify({
-            summary: validatedData.eligibilityResult.summary,
-            chapter7Eligibility: validatedData.eligibilityResult.chapter7Eligibility,
-            flags: validatedData.eligibilityResult.flags,
-          }),
-          disclaimers: JSON.stringify([validatedData.eligibilityResult.disclaimer]),
+          summary: validatedData.eligibilityResult.summary,
+          recommendedChapter: validatedData.eligibilityResult.recommendedChapter,
+          chapter7Eligible: validatedData.eligibilityResult.chapter7Eligibility === 'Eligible' || validatedData.eligibilityResult.chapter7Eligibility === 'Likely',
+          incomeTestPass: validatedData.eligibilityResult.flags.incomePass,
+          budgetTestPass: validatedData.eligibilityResult.flags.budgetPass,
+          assetRisk: validatedData.eligibilityResult.flags.assetRisk,
+          reasons: validatedData.eligibilityResult.reasons,
+          disclaimer: validatedData.eligibilityResult.disclaimer,
         },
       });
       console.log('[API] Eligibility result stored');
@@ -116,14 +148,15 @@ async function handleCreateLead(req: NextRequest) {
     await db.auditLog.create({
       data: {
         leadId: lead.id,
-        actor: 'user',
         event: 'lead_created',
-        payloadJson: JSON.stringify({
+        details: {
           state: lead.state,
           householdSize: lead.householdSize,
           county: lead.county,
           hasEligibility: !!validatedData.eligibilityResult,
-        }),
+        },
+        ipAddress,
+        userAgent,
       },
     });
 
@@ -137,14 +170,16 @@ async function handleCreateLead(req: NextRequest) {
     const isMailgunConfigured = env.MAILGUN_API_KEY && env.MAILGUN_DOMAIN && env.MAILGUN_FROM && env.STAFF_LEADS_EMAIL;
 
     if (isMailgunConfigured) {
-      // Send user confirmation email (DEV MODE: sending to dev instead of actual user)
+      // Send user confirmation email to the actual user
       const userEmail = generateUserConfirmationEmail({ email: lead.email });
       await mailgunProvider.send({
-        to: env.STAFF_LEADS_EMAIL!, // DEV: Send to dev instead of lead.email
-        subject: `[DEV - User Confirmation] ${userEmail.subject}`,
+        to: lead.email,
+        subject: userEmail.subject,
         html: userEmail.html,
         text: userEmail.text,
       });
+
+      logger.info('User confirmation email sent', { leadId: lead.id, to: lead.email });
 
       // Send staff notification email WITH eligibility
       const staffHtml = generateStaffEmailHTML(lead, validatedData.eligibilityResult);
@@ -157,7 +192,7 @@ async function handleCreateLead(req: NextRequest) {
         text: staffText,
       });
 
-      logger.info('Emails sent successfully', { leadId: lead.id });
+      logger.info('Staff notification email sent', { leadId: lead.id, to: env.STAFF_LEADS_EMAIL });
     } else {
       logger.info('Mailgun not configured - skipping email notifications', { leadId: lead.id });
     }
@@ -268,6 +303,7 @@ function generateStaffEmailHTML(lead: any, eligibility: any) {
       <div class="field">
         <span class="label">Email:</span> <span class="value">${lead.email}</span>
       </div>
+      ${lead.phone ? `<div class="field"><span class="label">Phone:</span> <span class="value">${lead.phone}</span></div>` : ''}
       <div class="field">
         <span class="label">State:</span> <span class="value">${lead.state}</span>
       </div>
@@ -283,13 +319,30 @@ function generateStaffEmailHTML(lead: any, eligibility: any) {
 
       <h2>Financial Snapshot</h2>
       <div class="field">
-        <span class="label">Monthly Income:</span> <span class="value">${lead.monthlyIncomeRange}</span>
+        <span class="label">Income Above Median:</span> <span class="value">${lead.isAboveMedian ? 'Yes' : 'No'}</span>
       </div>
       <div class="field">
-        <span class="label">Unsecured Debt:</span> <span class="value">${lead.unsecuredDebtRange}</span>
+        <span class="label">Monthly Expenses:</span> <span class="value">$${lead.monthlyExpenses.toFixed(2)}</span>
+      </div>
+      <div class="field">
+        <span class="label">Total Unsecured Debt:</span> <span class="value">${lead.totalDebt}</span>
       </div>
       <div class="field">
         <span class="label">Employment:</span> <span class="value">${lead.employmentStatus}</span>
+      </div>
+      <div class="field">
+        <span class="label">Prior Bankruptcy:</span> <span class="value">${lead.priorBankruptcy ? 'Yes' : 'No'}</span>
+      </div>
+
+      <h2>Assets</h2>
+      <div class="field">
+        <span class="label">Home Equity:</span> <span class="value">${lead.homeEquity !== null ? '$' + lead.homeEquity.toFixed(2) : 'No home'}</span>
+      </div>
+      <div class="field">
+        <span class="label">Vehicle Equity:</span> <span class="value">$${lead.vehicleEquity.toFixed(2)}</span>
+      </div>
+      <div class="field">
+        <span class="label">Valuable Items:</span> <span class="value">${lead.hasValuableItems ? 'Yes' : 'No'}</span>
       </div>
 
       <h2>Situation Indicators</h2>
@@ -341,6 +394,7 @@ NEW UTAH BANKRUPTCY LEAD
 
 Contact Information:
 - Email: ${lead.email}
+${lead.phone ? `- Phone: ${lead.phone}` : ''}
 - State: ${lead.state}
 ${lead.county ? `- County: ${lead.county}` : ''}
 
@@ -349,9 +403,16 @@ Household Information:
 - Marital Status: ${lead.maritalStatus}
 
 Financial Snapshot:
-- Monthly Income: ${lead.monthlyIncomeRange}
-- Unsecured Debt: ${lead.unsecuredDebtRange}
+- Income Above Median: ${lead.isAboveMedian ? 'Yes' : 'No'}
+- Monthly Expenses: $${lead.monthlyExpenses.toFixed(2)}
+- Total Unsecured Debt: ${lead.totalDebt}
 - Employment: ${lead.employmentStatus}
+- Prior Bankruptcy: ${lead.priorBankruptcy ? 'Yes' : 'No'}
+
+Assets:
+- Home Equity: ${lead.homeEquity !== null ? '$' + lead.homeEquity.toFixed(2) : 'No home'}
+- Vehicle Equity: $${lead.vehicleEquity.toFixed(2)}
+- Valuable Items: ${lead.hasValuableItems ? 'Yes' : 'No'}
 
 Situation Indicators:
 - Missed Payments: ${lead.missedPayments ? 'Yes' : 'No'}

@@ -24,9 +24,8 @@ export default function EmailConsentPage() {
     resolver: zodResolver(emailConsentSchema),
     defaultValues: {
       email: '',
-      consentPrivacy: false as any,
-      consentTerms: false as any,
-      consentData: false as any,
+      phone: '',
+      consentAll: false as any,
     },
   });
 
@@ -46,7 +45,7 @@ export default function EmailConsentPage() {
       // Check if we have detailed financial data for evaluation
       let eligibilityResult = null;
       if (
-        intakeData.monthlyIncome !== undefined &&
+        intakeData.incomeAboveThreshold !== undefined &&
         intakeData.monthlyExpenses !== undefined &&
         intakeData.homeEquity !== undefined &&
         intakeData.vehicleEquity !== undefined &&
@@ -55,8 +54,9 @@ export default function EmailConsentPage() {
         // Call eligibility evaluation endpoint
         const evaluationData = {
           householdSize: intakeData.householdSize,
-          monthlyIncome: intakeData.monthlyIncome,
+          incomeAboveThreshold: intakeData.incomeAboveThreshold,
           monthlyExpenses: intakeData.monthlyExpenses,
+          unsecuredDebt: intakeData.unsecuredDebt,
           homeEquity: intakeData.homeEquity,
           vehicleEquity: intakeData.vehicleEquity,
           hasValuableAssets: intakeData.hasValuableAssets,
@@ -80,9 +80,14 @@ export default function EmailConsentPage() {
       }
 
       // Combine intake data with email/consent and eligibility
+      // Convert single consentAll to the 3 separate fields expected by API
       const leadData = {
         ...intakeData,
-        ...data,
+        email: data.email,
+        phone: data.phone || undefined,
+        consentPrivacy: data.consentAll,
+        consentTerms: data.consentAll,
+        consentData: data.consentAll,
         eligibilityResult: eligibilityResult,
         source: 'lincolnlaw-utah-intake',
       };
@@ -103,15 +108,15 @@ export default function EmailConsentPage() {
 
       const result = await response.json();
 
-      // Store lead ID for Plaid page
+      // Store lead ID and email for confirmation
       localStorage.setItem('lincoln-law-lead-id', result.leadId);
       localStorage.setItem('lincoln-law-email', data.email);
 
       // Clear intake data
       localStorage.removeItem(STORAGE_KEY);
 
-      // Navigate to Plaid link page (optional step to add Plaid data)
-      router.push('/intake/link');
+      // Navigate directly to success page (Plaid integration disabled for production)
+      router.push('/intake/success');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setIsSubmitting(false);
@@ -119,18 +124,18 @@ export default function EmailConsentPage() {
   };
 
   return (
-    <div className="py-12">
+    <div className="py-12 min-h-screen">
       <div className="container mx-auto px-4 max-w-2xl">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-parchment/80 backdrop-blur-sm rounded-2xl cabin-shadow parchment-texture border-2 border-wood-light/30 p-8 md:p-10">
           {/* Header */}
           <div className="mb-8 text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-8 h-8 text-blue-600" />
+            <div className="w-20 h-20 bg-wood-light/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-wood-medium/30">
+              <Mail className="w-10 h-10 text-wood-dark" strokeWidth={1.5} />
             </div>
-            <h1 className="font-serif text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="font-serif text-4xl font-bold text-wood-dark mb-3">
               Almost Done
             </h1>
-            <p className="text-gray-600">
+            <p className="text-foreground/70 text-lg leading-relaxed">
               Enter your email to receive your next steps and personalized guidance.
             </p>
           </div>
@@ -163,84 +168,59 @@ export default function EmailConsentPage() {
               </p>
             </div>
 
-            {/* Consent Checkboxes */}
-            <div className="space-y-4 border-t border-gray-200 pt-6">
-              <div className="flex items-center space-x-2">
-                <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <h3 className="font-semibold text-gray-900">Required Consents</h3>
+            {/* Phone Input */}
+            <div>
+              <Label htmlFor="phone">Phone Number (Optional)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                {...register('phone')}
+                placeholder="(555) 123-4567"
+                className="mt-1"
+              />
+              {errors.phone && (
+                <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
+              )}
+              <p className="text-sm text-gray-500 mt-1">
+                Optional - We may call to discuss your options
+              </p>
+            </div>
+
+            {/* Consent Checkbox - Single Combined */}
+            <div className="border-t border-wood-light/30 pt-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <Shield className="w-5 h-5 text-wood-dark flex-shrink-0" strokeWidth={1.5} />
+                <h3 className="font-serif font-semibold text-lg text-wood-dark">Required Consent</h3>
               </div>
 
-              <div className="space-y-3">
-                {/* Privacy Policy */}
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="consentPrivacy"
-                    checked={watch('consentPrivacy')}
-                    onCheckedChange={(checked) => setValue('consentPrivacy', checked as boolean)}
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="consentPrivacy"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      I have read and agree to the{' '}
-                      <Link href="/legal/privacy" className="text-blue-600 hover:underline">
-                        Privacy Policy
-                      </Link>
-                      {' *'}
-                    </label>
-                    {errors.consentPrivacy && (
-                      <p className="text-xs text-red-600">{String(errors.consentPrivacy.message)}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Terms of Service */}
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="consentTerms"
-                    checked={watch('consentTerms')}
-                    onCheckedChange={(checked) => setValue('consentTerms', checked as boolean)}
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="consentTerms"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      I agree to the{' '}
-                      <Link href="/legal/terms" className="text-blue-600 hover:underline">
-                        Terms of Service
-                      </Link>
-                      {' *'}
-                    </label>
-                    {errors.consentTerms && (
-                      <p className="text-xs text-red-600">{String(errors.consentTerms.message)}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Data Collection */}
-                <div className="flex items-start space-x-3">
-                  <Checkbox
-                    id="consentData"
-                    checked={watch('consentData')}
-                    onCheckedChange={(checked) => setValue('consentData', checked as boolean)}
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="consentData"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      I consent to the collection and use of my information as described in the{' '}
-                      <Link href="/legal/consent" className="text-blue-600 hover:underline">
-                        Consent Disclosure
-                      </Link>
-                      {' *'}
-                    </label>
-                    {errors.consentData && (
-                      <p className="text-xs text-red-600">{String(errors.consentData.message)}</p>
-                    )}
-                  </div>
+              <div className="flex items-start space-x-3 bg-wood-light/10 p-4 rounded-lg border border-wood-medium/20">
+                <Checkbox
+                  id="consentAll"
+                  checked={watch('consentAll')}
+                  onCheckedChange={(checked) => setValue('consentAll', checked as true)}
+                />
+                <div className="grid gap-1.5 leading-none flex-1">
+                  <label
+                    htmlFor="consentAll"
+                    className="text-sm font-medium leading-relaxed peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-foreground"
+                  >
+                    I have read and agree to the{' '}
+                    <Link href="/legal/privacy" className="text-wood-dark hover:text-wood-medium underline font-semibold">
+                      Privacy Policy
+                    </Link>
+                    , the{' '}
+                    <Link href="/legal/terms" className="text-wood-dark hover:text-wood-medium underline font-semibold">
+                      Terms of Service
+                    </Link>
+                    , and the{' '}
+                    <Link href="/legal/consent" className="text-wood-dark hover:text-wood-medium underline font-semibold">
+                      Consent Disclosure
+                    </Link>
+                    . *
+                  </label>
+                  {errors.consentAll && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{String(errors.consentAll.message)}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -253,16 +233,16 @@ export default function EmailConsentPage() {
             )}
 
             {/* Submit Button */}
-            <div className="flex flex-col space-y-4 pt-4">
+            <div className="flex flex-col space-y-4 pt-6">
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-amber-500 hover:bg-amber-600"
+                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold text-lg py-6 cabin-shadow"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit & Continue'}
               </Button>
 
-              <Link href="/intake" className="text-center text-sm text-gray-600 hover:text-gray-900">
+              <Link href="/intake" className="text-center text-sm text-wood-medium hover:text-wood-dark font-medium">
                 ← Back to questionnaire
               </Link>
             </div>

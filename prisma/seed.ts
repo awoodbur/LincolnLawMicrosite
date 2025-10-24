@@ -5,27 +5,47 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create a test lead
-  const testLead = await prisma.lead.upsert({
+  // Delete existing test lead if it exists
+  await prisma.lead.deleteMany({
     where: { email: 'test@example.com' },
-    update: {},
-    create: {
+  });
+
+  // Create a test lead with updated schema
+  const testLead = await prisma.lead.create({
+    data: {
+      // Contact
+      email: 'test@example.com',
+      phone: '(555) 123-4567',
+
+      // Location
       state: 'Utah',
-      county: 'Salt Lake',
+      county: 'Salt Lake County',
+
+      // Household
       householdSize: 3,
       maritalStatus: 'Married',
-      monthlyIncomeRange: '$3–5k',
-      unsecuredDebtRange: '$25–50k',
+
+      // Employment & History
       employmentStatus: 'Employed',
+      priorBankruptcy: false,
+
+      // Financial Details
+      isAboveMedian: false,
+      monthlyExpenses: 3500.00,
+      totalDebt: '$25-50k',
+
+      // Assets
+      homeEquity: 25000.00,
+      vehicleEquity: 5000.00,
+      hasValuableItems: false,
+
+      // Urgency Flags
       missedPayments: true,
       wageGarnishment: false,
       propertyConcerns: true,
-      notes: 'Testing seed data',
-      email: 'test@example.com',
-      consentPrivacy: true,
-      consentTerms: true,
-      consentData: true,
-      source: 'lincolnlaw-utah-intake',
+
+      // Additional
+      notes: 'Test lead for development',
     },
   });
 
@@ -35,8 +55,9 @@ async function main() {
   await prisma.consentLog.create({
     data: {
       leadId: testLead.id,
-      version: 'v1.0',
-      ip: '127.0.0.1',
+      consentType: 'all',
+      consentVersion: 'v1.0',
+      ipAddress: '127.0.0.1',
       userAgent: 'Test/1.0',
     },
   });
@@ -47,9 +68,10 @@ async function main() {
   await prisma.auditLog.create({
     data: {
       leadId: testLead.id,
-      actor: 'system',
       event: 'lead_created',
-      payloadJson: JSON.stringify({ state: 'Utah', householdSize: 3 }),
+      details: { state: 'Utah', householdSize: 3 },
+      ipAddress: '127.0.0.1',
+      userAgent: 'Test/1.0',
     },
   });
 

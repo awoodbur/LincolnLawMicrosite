@@ -17,8 +17,9 @@ import { logger } from '../logger';
 
 export interface ChapterEvaluationInput {
   householdSize: number;
-  monthlyIncome: number;
+  incomeAboveThreshold: boolean;
   monthlyExpenses: number;
+  unsecuredDebt?: string;
   homeEquity: number | 'NA';
   vehicleEquity: number;
   hasValuableAssets: boolean;
@@ -65,27 +66,35 @@ function getMedianIncomeCap(householdSize: number): number {
 export function evaluateChapterEligibility(input: ChapterEvaluationInput): ChapterEvaluationResult {
   logger.info('Starting Chapter 7/13 evaluation', {
     householdSize: input.householdSize,
-    monthlyIncome: input.monthlyIncome,
+    incomeAboveThreshold: input.incomeAboveThreshold,
   });
 
   // ========== Income Test (Means Test) ==========
+  // Direct use of the threshold answer - if income is above median, they fail the income test
+  const incomePass = !input.incomeAboveThreshold;
   const cap = getMedianIncomeCap(input.householdSize);
-  const annualIncome = input.monthlyIncome * 12;
-  const incomePass = annualIncome < cap;
 
   logger.debug('Income test', {
-    annualIncome,
+    incomeAboveThreshold: input.incomeAboveThreshold,
     cap,
     incomePass,
   });
 
   // ========== Budget Test (Disposable Income) ==========
-  const excess = input.monthlyIncome - input.monthlyExpenses;
-  const budgetPass = excess < input.monthlyIncome * DISPOSABLE_INCOME_THRESHOLD;
+  // Estimate income based on expenses (we don't have actual income anymore)
+  // Conservative estimate: if below median, assume income ~1.1x expenses; if above, assume ~1.5x expenses
+  const estimatedMonthlyIncome = input.incomeAboveThreshold
+    ? input.monthlyExpenses * 1.5
+    : input.monthlyExpenses * 1.1;
+
+  const excess = estimatedMonthlyIncome - input.monthlyExpenses;
+  const budgetPass = excess < estimatedMonthlyIncome * DISPOSABLE_INCOME_THRESHOLD;
 
   logger.debug('Budget test', {
+    estimatedMonthlyIncome,
+    monthlyExpenses: input.monthlyExpenses,
     excess,
-    threshold: input.monthlyIncome * DISPOSABLE_INCOME_THRESHOLD,
+    threshold: estimatedMonthlyIncome * DISPOSABLE_INCOME_THRESHOLD,
     budgetPass,
   });
 
