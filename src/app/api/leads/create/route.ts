@@ -187,7 +187,7 @@ async function handleCreateLead(req: NextRequest) {
 
       await mailgunProvider.send({
         to: env.STAFF_LEADS_EMAIL!,
-        subject: `[LEAD] New Bankruptcy Lead: ${lead.email} (${lead.state})`,
+        subject: `New Bankruptcy Lead: ${lead.email} (${lead.state})`,
         html: staffHtml,
         text: staffText,
       });

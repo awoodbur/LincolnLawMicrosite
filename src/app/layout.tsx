@@ -22,6 +22,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
 
+        {/* Favicon - Lincoln head */}
+        <link rel="icon" type="image/png" href="/icon.png" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
+
         {/* Local Business Structured Data - helps Google show you in local search */}
         <script
           type="application/ld+json"

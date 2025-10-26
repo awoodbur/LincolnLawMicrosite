@@ -197,25 +197,25 @@ export default function FAQPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-parchment via-background to-parchment">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-wood-dark via-forest-dark to-wood-dark text-parchment py-16 wood-texture relative">
-        <div className="absolute inset-0 bg-forest-dark/20"></div>
+      <div className="bg-gradient-to-r from-wood-dark via-forest-dark to-wood-dark py-16 wood-texture relative">
+        <div className="absolute inset-0 bg-forest-dark/40"></div>
         <div className="container mx-auto px-4 max-w-6xl relative">
           <button
             onClick={handleBack}
-            className="text-parchment hover:text-gold text-sm flex items-center mb-6 transition-colors font-semibold"
+            className="text-gold hover:text-parchment text-sm flex items-center mb-6 transition-colors font-semibold"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </button>
           <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-parchment/20 rounded-full flex items-center justify-center border-2 border-gold/30">
-              <HelpCircle className="w-8 h-8 text-gold" />
+            <div className="w-16 h-16 bg-gold/30 rounded-full flex items-center justify-center border-2 border-gold shadow-lg">
+              <HelpCircle className="w-8 h-8 text-gold drop-shadow-md" />
             </div>
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-center mb-4">
+          <h1 className="font-serif text-4xl md:text-5xl font-bold text-center mb-4 text-gold drop-shadow-md">
             Bankruptcy FAQ
           </h1>
-          <p className="text-xl text-parchment/90 text-center max-w-3xl mx-auto">
+          <p className="text-xl text-parchment text-center max-w-3xl mx-auto drop-shadow">
             Get answers to common questions about bankruptcy in Utah
           </p>
         </div>
