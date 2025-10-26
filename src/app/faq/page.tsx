@@ -195,34 +195,31 @@ export default function FAQPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-parchment via-background to-parchment">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-wood-dark via-forest-dark to-wood-dark py-16 wood-texture relative">
-        <div className="absolute inset-0 bg-forest-dark/40"></div>
-        <div className="container mx-auto px-4 max-w-6xl relative">
+    <div className="min-h-screen py-12">
+      <div className="container mx-auto px-4 max-w-6xl">
+        {/* Header Section */}
+        <div className="bg-parchment/80 backdrop-blur-sm rounded-2xl cabin-shadow parchment-texture border-2 border-wood-light/30 p-8 md:p-10 mb-8">
           <button
             onClick={handleBack}
-            className="text-gold hover:text-parchment text-sm flex items-center mb-6 transition-colors font-semibold"
+            className="text-wood-medium hover:text-wood-dark text-sm flex items-center font-semibold transition-colors mb-6"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </button>
           <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 bg-gold/30 rounded-full flex items-center justify-center border-2 border-gold shadow-lg">
-              <HelpCircle className="w-8 h-8 text-gold drop-shadow-md" />
+            <div className="w-16 h-16 bg-wood-light/20 rounded-full flex items-center justify-center border-2 border-wood-medium/30">
+              <HelpCircle className="w-8 h-8 text-wood-dark" />
             </div>
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-center mb-4 text-gold drop-shadow-md">
+          <h1 className="font-serif text-4xl md:text-5xl font-bold text-center mb-4 text-wood-dark">
             Bankruptcy FAQ
           </h1>
-          <p className="text-xl text-parchment text-center max-w-3xl mx-auto drop-shadow">
+          <p className="text-muted-foreground text-center max-w-3xl mx-auto">
             Get answers to common questions about bankruptcy in Utah
           </p>
         </div>
-      </div>
 
-      {/* Category Filter */}
-      <div className="container mx-auto px-4 max-w-6xl -mt-8">
+        {/* Category Filter */}
         <div className="bg-parchment/90 backdrop-blur-sm rounded-lg cabin-shadow parchment-texture border-2 border-wood-light/30 p-4 mb-8">
           <div className="flex flex-wrap gap-2 justify-center">
             {categories.map((category) => (
@@ -240,11 +237,9 @@ export default function FAQPage() {
             ))}
           </div>
         </div>
-      </div>
 
-      {/* FAQ Items */}
-      <div className="container mx-auto px-4 max-w-4xl pb-16">
-        <div className="space-y-4">
+        {/* FAQ Items */}
+        <div className="space-y-4 mb-16">
           {filteredFaqs.map((faq, index) => (
             <div
               key={index}
@@ -273,13 +268,13 @@ export default function FAQPage() {
               )}
             </div>
           ))}
-        </div>
 
-        {filteredFaqs.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No questions found in this category.</p>
-          </div>
-        )}
+          {filteredFaqs.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No questions found in this category.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* CTA Section */}

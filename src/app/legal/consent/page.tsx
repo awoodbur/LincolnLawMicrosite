@@ -33,14 +33,14 @@ export default function ConsentPage() {
           </div>
 
         {/* Content */}
-        <div className="prose prose-blue max-w-none">
+        <div className="prose prose-lg max-w-none">
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Purpose of This Disclosure</h2>
             <p className="text-gray-700 mb-4">
               This Consent Disclosure explains what information we collect when you use our bankruptcy assessment questionnaire, how we use that information, and your rights regarding your data. Please read this carefully before providing any information.
             </p>
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-4">
-              <p className="text-blue-900">
+            <div className="bg-wood-light/20 border-l-4 border-wood-dark p-6 mb-4 rounded">
+              <p className="text-wood-dark">
                 <strong>By submitting our questionnaire, you explicitly consent to the collection, use, and disclosure of your information as described in this document.</strong>
               </p>
             </div>
@@ -280,11 +280,11 @@ export default function ConsentPage() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Consent Acknowledgment</h2>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <p className="text-blue-900 mb-4">
+            <div className="bg-wood-light/20 border border-wood-medium/30 rounded-lg p-6">
+              <p className="text-wood-dark mb-4">
                 By checking the consent boxes in our questionnaire, you acknowledge that:
               </p>
-              <ul className="list-disc pl-6 text-blue-800 space-y-2">
+              <ul className="list-disc pl-6 text-gray-700 space-y-2">
                 <li>You have read and understood this Consent Disclosure</li>
                 <li>You have read and agree to our Privacy Policy and Terms of Service</li>
                 <li>You voluntarily provide your information</li>
